@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -28,6 +29,8 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import java.util.ArrayList;
 import java.util.List;
 
+@Autonomous
+@Disabled
 public class VuforiaAutonomousBlue extends LinearOpMode {
     private BNO055IMU imu;
     private DcMotor leftMotor;
