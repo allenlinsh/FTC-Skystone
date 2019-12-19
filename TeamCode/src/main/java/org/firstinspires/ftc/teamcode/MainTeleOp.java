@@ -47,6 +47,7 @@ public class MainTeleOp extends LinearOpMode {
     private double lateralFactor = 1.40;
     private double armPower, gripPower;
     private double leftBackPower, rightBackPower, leftFrontPower, rightFrontPower;
+    private boolean reachTop = false, reachBottom = false;
 
     @Override
     public void runOpMode() {
@@ -88,6 +89,7 @@ public class MainTeleOp extends LinearOpMode {
             if (this.gamepad2.right_trigger > 0) gripPower = this.gamepad2.right_trigger * maxGripPower;
             // Grip release
             else if (this.gamepad2.left_trigger > 0) gripPower = -this.gamepad2.right_trigger * maxGripPower;
+            gripMotor.setPower(gripPower);
 
             // Left skystone grabber
             if (noStart && this.gamepad2.x) {
@@ -104,6 +106,7 @@ public class MainTeleOp extends LinearOpMode {
                 else if (rightSkystoneServo.getPosition() < 0.98) rightSkystoneServo.setPosition(0.98);
             }
 
+            // Dpad movement
             if (this.gamepad1.left_stick_y == 0 && this.gamepad1.left_stick_x == 0 && this.gamepad1.right_stick_x == 0) {
                 // Slow left
                 if (gamepad1.dpad_left) driveLateral = -(minPower + slowGain) * lateralFactor;
@@ -118,6 +121,7 @@ public class MainTeleOp extends LinearOpMode {
                 // Slow clockwise
                 if (noStart && gamepad1.b) driveYaw = (minTurnPower + slowGain);
             }
+            // Joystick movement
             else {
                 // set axial movement to logarithmic values and set a dead zone
                 driveAxial = this.gamepad1.left_stick_y;
@@ -147,27 +151,34 @@ public class MainTeleOp extends LinearOpMode {
             rightBackPower = round((driveLateral - driveAxial - driveYaw), 2);
             leftFrontPower = round((driveLateral - driveAxial + driveYaw), 2);
             rightFrontPower = round((-driveLateral - driveAxial - driveYaw), 2);
-            if (this.gamepad1.left_stick_y != 0 || this.gamepad1.left_stick_x != 0 || this.gamepad1.right_stick_x != 0 || this. gamepad1.dpad_up || this. gamepad1.dpad_down || this. gamepad1.dpad_left || this. gamepad1.dpad_right || this. gamepad1.x || this. gamepad1.b) {
+            if (this.gamepad1.left_stick_y != 0 || this.gamepad1.left_stick_x != 0
+                    || this.gamepad1.right_stick_x != 0 || this. gamepad1.dpad_up
+                    || this. gamepad1.dpad_down || this. gamepad1.dpad_left
+                    || this. gamepad1.dpad_right || this. gamepad1.x
+                    || this. gamepad1.b) {
                 run(leftBackPower, rightBackPower, leftFrontPower, rightFrontPower);
             }
             else {
                 stopMotor();
             }
 
-            // Arm stops if top limit is on and arm is moving backward
-            // or if bottom limit is on and arm is moving forward
             armPower = this.gamepad2.left_stick_y;
-            if ((armPower > 0 && topPressed()) || (armPower < 0 && bottomPressed())) armMotor.setPower(0);
-            else armMotor.setPower(armPower);
+            // Arm stops if top limit is on -> restrict arm movement to forward
+            if (topPressed() && !resetArm()) reachTop = true;
+            else reachTop = false;
+            if (armPower > 0 && reachTop) armPower = 0;
+            // Arm stops if bottom limit is on -> restrict arm movement to backward
+            if (bottomPressed() && !resertArm()) reachBottom = true;
+            else reachBottom = false;
+            if (armPower < 0 && reachBottom) armPower = 0;
+            armMotor.setPower(armPower);
 
-            gripMotor.setPower(gripPower);
-
-            telemetry.addData("4 leftBackPower", leftBackPower);
-            telemetry.addData("5 rightBackPower", rightBackPower);
-            telemetry.addData("6 leftFrontPower", leftFrontPower);
-            telemetry.addData("7 rightFrontPower", rightBackPower);
-            telemetry.addData("8 gripPower", gripPower);
-            telemetry.addData("9 armPower", armPower);
+            telemetry.addData("Left Back Power", leftBackPower);
+            telemetry.addData("Right Back Power", rightBackPower);
+            telemetry.addData("Left Front Power", leftFrontPower);
+            telemetry.addData("Right Front Power", rightBackPower);
+            telemetry.addData("Arm Power", armPower);
+            telemetry.addData("Grip Power", gripPower);
             telemetry.update();
         }
         resetMotor();
@@ -312,12 +323,9 @@ public class MainTeleOp extends LinearOpMode {
         armMotor.setPower(0);
         gripMotor.setPower(0);
     }
+    public boolean resetArm() {
 
     public void pause() {sleep(150);}
-    public boolean topPressed() {
-        return !topLimit.getState();
-    }
-    public boolean bottomPressed() {
-        return !bottomLimit.getState();
-    }
+    public boolean topPressed() {return !topLimit.getState();}
+    public boolean bottomPressed() {return !bottomLimit.getState();}
 }
