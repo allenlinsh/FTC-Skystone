@@ -57,6 +57,8 @@ public class MainAutonomous extends LinearOpMode {
     private double correction;
     private double maxPower = round((100.0/127.0), 2);
     private double minPower = 0.25;
+    private double minTurnPower = 0.35;
+    private int timePerBlock = 1350;
 
     // Declare vuforia variables
     private VuforiaLocalizer vuforia;
@@ -75,7 +77,7 @@ public class MainAutonomous extends LinearOpMode {
             "35GzpFlTXa1IhHjo0Lsvm2qTM8WqgLIKYYep1urYPAPYYUsT+WXUSLCbw0TkQcIVLP6FdvQL6FtCeRoA29f" +
             "pTdq5L4RFsdqac2fELdXY8rjZpJDx4g/8KN6aw1iG4ZocJBzgzhELtCgQbqJppGGk7z/CRTvcXL1dhIunZ";
     private int cameraMonitorViewId;
-    private boolean streamView                  = true;
+    private boolean streamView                  = false;
     private boolean targetVisible               = false;
     private boolean vuforiaReady                = false;
     private boolean skystoneFound               = false;
@@ -118,10 +120,12 @@ public class MainAutonomous extends LinearOpMode {
 
         // Autonomous
         if(opModeIsActive()) {
-            timeDrive("front", maxPower, 1255);
-            //recognizeTarget("Stone Target");
+            encoderDrive("front", minPower, 1);
+            encoderDrive("back", minPower, 1);
+            encoderDrive("front", minPower, 1);
+            encoderDrive("back", minPower, 1);
         }
-
+        resetMotor();
         visionTargets.deactivate();
     }
     // General functions
@@ -196,7 +200,7 @@ public class MainAutonomous extends LinearOpMode {
     public boolean checkIMU() {
         if (imu.isGyroCalibrated()) return true;
         else return false;
-        }
+    }
     public void initVuforia() {
         if(streamView) parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
         else parameters = new VuforiaLocalizer.Parameters();
@@ -279,7 +283,7 @@ public class MainAutonomous extends LinearOpMode {
     }
     public void initCheck() {
         while (!isStopRequested() && !(checkMotor() && checkServo() && checkIMU() && checkVuforia())) {
-             // Initialize motor
+            // Initialize motor
             if(!checkMotor()) {
                 print("Motor","Initializing");
                 telemetry.update();
@@ -403,19 +407,18 @@ public class MainAutonomous extends LinearOpMode {
     }
     public void timeDrive(String direction, double power, double duration) {
         // The factor value determines the scaling factor to normalize each movement
-        double lateralFactor    = 1.75;
+        double lateralFactor    = 2.0;
         double axialFactor      = 1.0;
-        double diagnolFactor    = 1.75;
-        double lateralPower     = round(power / lateralFactor, 2);
-        double axialPower       = round(power / axialFactor, 2);
-        double diagnolPower     = round(power / diagnolFactor, 2);
+        double diagnolFactor    = 3.25;
+        double lateralPower     = round((power * lateralFactor), 2);
+        double axialPower       = round((power * axialFactor), 2);
+        double diagnolPower     = round((power * diagnolFactor), 2);
         runtime.reset();
         runtime.startTime();
         switch (direction) {
             case "front":
                 run(axialPower, axialPower, axialPower, axialPower);
-                while(opModeIsActive() && runtime.milliseconds() < duration) {
-                }
+                while(opModeIsActive() && runtime.milliseconds() < duration) {}
             case "back":
                 run(-axialPower, -axialPower, -axialPower, -axialPower);
                 while(opModeIsActive() && runtime.milliseconds() < duration) {}
@@ -426,7 +429,7 @@ public class MainAutonomous extends LinearOpMode {
                 run(-lateralPower, lateralPower, lateralPower, -lateralPower);
                 while(opModeIsActive() && runtime.milliseconds() < duration) {}
             case "front left":
-                run(power, 0, 0, power);
+                run(diagnolPower, 0, 0, diagnolPower);
                 while(opModeIsActive() && runtime.milliseconds() < duration) {}
             case "front right":
                 run(0, diagnolPower, diagnolPower, 0);
@@ -438,6 +441,7 @@ public class MainAutonomous extends LinearOpMode {
                 run(-diagnolPower, 0, 0, -diagnolPower);
                 while(opModeIsActive() && runtime.milliseconds() < duration) {}
         }
+        gyroCorrection();
         stopMotor();
     }
     public void timeTurn(String direction, double power, double duration) {
@@ -455,45 +459,43 @@ public class MainAutonomous extends LinearOpMode {
     }
     public void encoderDrive(String direction, double power, double block) {
         // The factor value determines the scaling factor to normalize each movement
-        double lateralFactor    = 7/6;
-        double axialFactor      = 1;
-        double diagnolFactor    = 7/6;
-        double lateralPower     = round(power / lateralFactor, 2);
-        double axialPower       = round(power / axialFactor, 2);
-        double diagnolPower     = round(power / diagnolFactor, 2);
+        double lateralFactor    = 2.0;
+        double axialFactor      = 1.0;
+        double diagnolFactor    = 3.25;
+        double lateralPower     = round((power * lateralFactor), 2);
+        double axialPower       = round((power * axialFactor), 2);
+        double diagnolPower     = round((power * diagnolFactor), 2);
 
         double circumference    = Math.PI * 3.75;
         double inPerRev         = circumference / ticksPerRev;
-        int distance            = (int)(block * 23.625 * inPerRev);
+        int distance            = (int)(block * 23.625 / inPerRev);
 
         switch (direction) {
             case "front":
                 setEncoder(distance);
-                run(minPower, minPower, minPower, minPower);
-                while(opModeIsActive() && leftBackMotor.isBusy()) {}
+                run(lateralPower, lateralPower, lateralPower, lateralPower);
+                while(opModeIsActive() && leftFrontMotor.isBusy()) {}
             case "back":
                 setEncoder(-distance);
-                run(-minPower, -minPower, -minPower, -minPower);
-                while(opModeIsActive() && leftBackMotor.isBusy()) {}
+                run(-lateralPower, -lateralPower, -lateralPower, -lateralPower);
+                while(opModeIsActive() && leftFrontMotor.isBusy()) {}
             case "left":
                 setEncoder(distance);
-                run(minPower, -minPower, -minPower, minPower);
-                while(opModeIsActive() && leftBackMotor.isBusy()) {}
+                run(axialPower, -axialPower, -axialPower, axialPower);
+                while(opModeIsActive() && leftFrontMotor.isBusy()) {}
             case "right":
                 setEncoder(-distance);
-                run(-minPower, minPower, minPower, -minPower);
-                while(opModeIsActive() && leftBackMotor.isBusy()) {}
+                run(-axialPower, axialPower, axialPower, -axialPower);
+                while(opModeIsActive() && leftFrontMotor.isBusy()) {}
         }
+        gyroCorrection();
         stopMotor();
 
     }
     public void setEncoder(int distance) {
-        leftBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackMotor.setTargetPosition(distance);
-        leftBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftFrontMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFrontMotor.setTargetPosition(distance);
         leftFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
     public void encoderDriveSmooth(int distance) {
         // The acceleration value determines the range to normalize each movement
@@ -528,10 +530,20 @@ public class MainAutonomous extends LinearOpMode {
     public void stopMotor() {
         run(0, 0, 0, 0);
     }
+    public void resetMotor() {
+        leftBackMotor.setPower(0);
+        rightBackMotor.setPower(0);
+        leftFrontMotor.setPower(0);
+        rightFrontMotor.setPower(0);
+        armMotor.setPower(0);
+        gripMotor.setPower(0);
+    }
     public void gyroCorrection() {
         while (opModeIsActive() && checkGyro()) {
-            if(getAngle() < 0) timeTurn("clockwise", minPower, 10);
-            else if (getAngle() > 0) timeTurn("counter-clockwise", minPower, 10);
+            if(getAngle() < 0) timeTurn("clockwise", minPower, 50);
+            else if (getAngle() > 0) timeTurn("counter-clockwise", minPower, 50);
+            idle();
+            sleep(10);
         }
         stopMotor();
 
@@ -563,7 +575,7 @@ public class MainAutonomous extends LinearOpMode {
         return correction;
     }
     private boolean checkGyro() {
-        if(Math.abs(getAngle()) > 1) return true;
+        if(Math.abs(getAngle()) > 5) return true;
         else return false;
     }
 }
