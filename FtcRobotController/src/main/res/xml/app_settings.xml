@@ -73,9 +73,9 @@ See https://developer.android.com/guide/topics/ui/settings.html
         android:title="@string/titleAdvancedRCSettings"
         android:summary="@string/summaryAdvancedRCSettings"
         android:key="@string/pref_launch_advanced_rc_settings">
-        <intent
-            android:targetPackage="@string/packageName"
-            android:targetClass="com.qualcomm.ftccommon.FtcAdvancedRCSettingsActivity"
+      <intent
+        android:targetPackage="@string/packageName"
+        android:targetClass="com.qualcomm.ftccommon.FtcAdvancedRCSettingsActivity"
             />
     </PreferenceScreen>
 
@@ -87,6 +87,62 @@ See https://developer.android.com/guide/topics/ui/settings.html
         android:targetPackage="@string/packageName"
         android:targetClass="com.qualcomm.ftccommon.ViewLogsActivity" />
     </PreferenceScreen>
+
+  </PreferenceCategory>
+
+  <PreferenceCategory
+    android:title="Autonomous Settings"
+    android:key="auto">
+
+      <ListPreference
+        android:title="Team Alliance Color"
+        android:summary="Change color of the team alliance"
+        android:key="auto_team_color"
+        android:entries="@array/color"
+        android:entryValues="@array/colorAlias"
+        android:defaultValue="blue"
+        />
+
+      <CheckBoxPreference
+        android:title="Foundation Movement"
+        android:summary="Move foundation to the building site"
+        android:key="auto_do_foundation"
+        android:defaultValue="true"
+        />
+
+      <CheckBoxPreference
+        android:title="Skystone Recognition"
+        android:summary="Recognize and deliver 2 skystones to the building site"
+        android:key="auto_do_skystone"
+        android:defaultValue="false"
+        />
+
+      <ListPreference
+        android:title="Parking Position"
+        android:summary="Select parking position of the robot"
+        android:key="auto_parking"
+        android:entries="@array/parking"
+        android:entryValues="@array/parkingAlias"
+        android:defaultValue="bridge"
+        />
+
+      <ListPreference
+        android:title="Starting Postion"
+        android:summary="Select starting position of the robot"
+        android:key="auto_starting"
+        android:entries="@array/starting"
+        android:entryValues="@array/startingAlias"
+        android:defaultValue="depot"
+        />
+
+      <EditTextPreference
+        android:title="Delay Time"
+        android:summary="The amount of time delayed before autonomous"
+        android:dialogTitle="Delay Time (seconds)"
+        android:inputType="number"
+        android:key="auto_delay_time"
+        android:defaultValue="0"
+        />
 
   </PreferenceCategory>
 

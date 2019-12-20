@@ -179,6 +179,7 @@ public class MainTeleOp extends LinearOpMode {
     public double round(double val, int roundTo) {
         return Double.valueOf(String.format("%." + roundTo + "f", val));
     }
+    public void pause() {sleep(150);}
 
     // Init functions
     public void getHardwareMap() {
@@ -312,8 +313,6 @@ public class MainTeleOp extends LinearOpMode {
         armMotor.setPower(0);
         gripMotor.setPower(0);
     }
-
-    public void pause() {sleep(150);}
     public boolean topPressed() {
         return !topLimit.getState();
     }
