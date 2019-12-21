@@ -32,6 +32,7 @@ public class MainTeleOp extends LinearOpMode {
     // Declare general variables
     public ElapsedTime runtime;
     private boolean noStart = true;
+    private boolean resetArm = false;
 
     // Declare movement variables
     private static final int ticksPerRev = 480;
@@ -47,6 +48,7 @@ public class MainTeleOp extends LinearOpMode {
     private double lateralFactor = 1.40;
     private double armPower, gripPower;
     private double leftBackPower, rightBackPower, leftFrontPower, rightFrontPower;
+    private boolean reachTop = false, reachBottom = false;
 
     @Override
     public void runOpMode() {
@@ -65,7 +67,8 @@ public class MainTeleOp extends LinearOpMode {
         telemetry.update();
 
         while (opModeIsActive()) {
-            noStart = !(this.gamepad1.start || this.gamepad2.start);
+            noStart = !(gamepad1.start || gamepad2.start);
+            resetArm = (gamepad2.y) ? true : false;
 
             driveAxial      = 0;
             driveLateral    = 0;
@@ -74,37 +77,39 @@ public class MainTeleOp extends LinearOpMode {
             gripPower       = 0;
 
             // Hook on
-            if (this.gamepad1.right_bumper) {
+            if (gamepad1.right_bumper) {
                 leftServo.setPosition(1);
                 rightServo.setPosition(0);
             }
             // Hook off
-            else if (this.gamepad1.left_bumper) {
+            else if (gamepad1.left_bumper) {
                 leftServo.setPosition(0.1);
                 rightServo.setPosition(0.9);
             }
 
             // Grip hold
-            if (this.gamepad2.right_trigger > 0) gripPower = this.gamepad2.right_trigger * maxGripPower;
-            // Grip release
-            else if (this.gamepad2.left_trigger > 0) gripPower = -this.gamepad2.right_trigger * maxGripPower;
+            if (gamepad2.right_trigger > 0) gripPower = gamepad2.right_trigger * maxGripPower;
+                // Grip release
+            else if (gamepad2.left_trigger > 0) gripPower = -gamepad2.left_trigger * maxGripPower;
+            gripMotor.setPower(gripPower);
 
             // Left skystone grabber
-            if (noStart && this.gamepad2.x) {
+            if (noStart && gamepad2.x) {
                 // Grabber on
                 if (leftSkystoneServo.getPosition() < 0.98) leftSkystoneServo.setPosition(0.98);
-                // Grabber off
+                    // Grabber off
                 else if (leftSkystoneServo.getPosition() > 0.52) leftSkystoneServo.setPosition(0.52);
             }
             // Right skystone grabber
-            else if (noStart && this.gamepad2.b) {
+            else if (noStart && gamepad2.b) {
                 // Grabber on
                 if (rightSkystoneServo.getPosition() > 0.52) rightSkystoneServo.setPosition(0.52);
-                // Grabber off
+                    // Grabber off
                 else if (rightSkystoneServo.getPosition() < 0.98) rightSkystoneServo.setPosition(0.98);
             }
 
-            if (this.gamepad1.left_stick_y == 0 && this.gamepad1.left_stick_x == 0 && this.gamepad1.right_stick_x == 0) {
+            // Dpad movement
+            if (gamepad1.left_stick_y == 0 && gamepad1.left_stick_x == 0 && gamepad1.right_stick_x == 0) {
                 // Slow left
                 if (gamepad1.dpad_left) driveLateral = -(minPower + slowGain) * lateralFactor;
                 // Slow right
@@ -118,16 +123,17 @@ public class MainTeleOp extends LinearOpMode {
                 // Slow clockwise
                 if (noStart && gamepad1.b) driveYaw = (minTurnPower + slowGain);
             }
+            // Joystick movement
             else {
                 // set axial movement to logarithmic values and set a dead zone
-                driveAxial = this.gamepad1.left_stick_y;
+                driveAxial = gamepad1.left_stick_y;
                 if (Math.abs(driveAxial) < Math.sqrt(0.1)) driveAxial = 0;
                 else {
                     driveAxial = driveAxial * maxPower;
                     driveAxial = Math.signum(driveAxial) * driveAxial * driveAxial;
                 }
                 // set lateral movement to logarithmic values and set a dead zone
-                driveLateral = this.gamepad1.left_stick_x;
+                driveLateral = gamepad1.left_stick_x;
                 if (Math.abs(driveLateral) < Math.sqrt(0.1)) driveLateral = 0;
                 else {
                     driveLateral = driveLateral * maxPower;
@@ -135,7 +141,7 @@ public class MainTeleOp extends LinearOpMode {
                     driveLateral = driveLateral * lateralFactor;
                 }
                 // set yaw movement to logarithmic values and set a dead zone
-                driveYaw = this.gamepad1.right_stick_x;
+                driveYaw = gamepad1.right_stick_x;
                 if (Math.abs(driveYaw) < Math.sqrt(0.1)) driveYaw = 0;
                 else {
                     driveYaw = driveYaw * maxPower;
@@ -147,27 +153,30 @@ public class MainTeleOp extends LinearOpMode {
             rightBackPower = round((driveLateral - driveAxial - driveYaw), 2);
             leftFrontPower = round((driveLateral - driveAxial + driveYaw), 2);
             rightFrontPower = round((-driveLateral - driveAxial - driveYaw), 2);
-            if (this.gamepad1.left_stick_y != 0 || this.gamepad1.left_stick_x != 0 || this.gamepad1.right_stick_x != 0 || this. gamepad1.dpad_up || this. gamepad1.dpad_down || this. gamepad1.dpad_left || this. gamepad1.dpad_right || this. gamepad1.x || this. gamepad1.b) {
+            if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0
+                    || gamepad1.right_stick_x != 0 || gamepad1.dpad_up
+                    || gamepad1.dpad_down || gamepad1.dpad_left
+                    || gamepad1.dpad_right || gamepad1.x
+                    || gamepad1.b) {
                 run(leftBackPower, rightBackPower, leftFrontPower, rightFrontPower);
             }
             else {
                 stopMotor();
             }
 
-            // Arm stops if top limit is on and arm is moving backward
-            // or if bottom limit is on and arm is moving forward
-            armPower = this.gamepad2.left_stick_y;
-            if ((armPower > 0 && topPressed()) || (armPower < 0 && bottomPressed())) armMotor.setPower(0);
-            else armMotor.setPower(armPower);
+            // Arm stops if top or bottom limit is on
+            reachTop = (topPressed() && !resetArm) ? true : false;
+            reachBottom = (bottomPressed() && !resetArm) ? true : false;
 
-            gripMotor.setPower(gripPower);
+            armPower = ((armPower > 0 && reachTop) || (armPower < 0 && reachBottom)) ? 0 : gamepad2.left_stick_y;
+            armMotor.setPower(armPower);
 
-            telemetry.addData("4 leftBackPower", leftBackPower);
-            telemetry.addData("5 rightBackPower", rightBackPower);
-            telemetry.addData("6 leftFrontPower", leftFrontPower);
-            telemetry.addData("7 rightFrontPower", rightBackPower);
-            telemetry.addData("8 gripPower", gripPower);
-            telemetry.addData("9 armPower", armPower);
+            telemetry.addData("Left Back Power", leftBackPower);
+            telemetry.addData("Right Back Power", rightBackPower);
+            telemetry.addData("Left Front Power", leftFrontPower);
+            telemetry.addData("Right Front Power", rightBackPower);
+            telemetry.addData("Arm Power", armPower);
+            telemetry.addData("Grip Power", gripPower);
             telemetry.update();
         }
         resetMotor();
@@ -179,7 +188,6 @@ public class MainTeleOp extends LinearOpMode {
     public double round(double val, int roundTo) {
         return Double.valueOf(String.format("%." + roundTo + "f", val));
     }
-    public void pause() {sleep(150);}
 
     // Init functions
     public void getHardwareMap() {
@@ -313,10 +321,7 @@ public class MainTeleOp extends LinearOpMode {
         armMotor.setPower(0);
         gripMotor.setPower(0);
     }
-    public boolean topPressed() {
-        return !topLimit.getState();
-    }
-    public boolean bottomPressed() {
-        return !bottomLimit.getState();
-    }
+    public void pause() {sleep(150);}
+    public boolean topPressed() {return !topLimit.getState();}
+    public boolean bottomPressed() {return !bottomLimit.getState();}
 }
