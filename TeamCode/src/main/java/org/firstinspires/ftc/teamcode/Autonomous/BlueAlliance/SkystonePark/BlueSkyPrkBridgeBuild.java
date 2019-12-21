@@ -9,17 +9,16 @@ public class BlueSkyPrkBridgeBuild extends MainAutonomous {
         // Initialize autonomous route
         getPreferences();
         checkPreferences();
-        print("Alliance", teamColor);
-        print("Foundation", doFoundation);
-        print("Skystone", doSkystone);
-        print("Parking Position", parking);
-        print("Starting Position", starting);
 
         // Initialize hardware
         getHardwareMap();
         initCheck();
         print("Status", "Initialized");
-        getPreferences();
+        print("Alliance", teamColor);
+        print("Foundation", doFoundation);
+        print("Skystone", doSkystone);
+        print("Parking Position", parking);
+        print("Starting Position", starting);
         telemetry.update();
 
         waitForStart();
@@ -39,7 +38,7 @@ public class BlueSkyPrkBridgeBuild extends MainAutonomous {
             while (runtime.milliseconds() < delayTime) {}
             // Transition
             encoderDrive("front", minPower, 1);
-            buildingsiteToDepot("blue", minPower, minTurnPower);
+            buildingSiteToDepot("blue", minPower, minTurnPower);
             // Recognize skystone
             recognizeTarget("Stone Target");
             // Grab 1st skystone

@@ -9,17 +9,16 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
         // Initialize autonomous route
         getPreferences();
         checkPreferences();
-        print("Alliance", teamColor);
-        print("Foundation", doFoundation);
-        print("Skystone", doSkystone);
-        print("Parking Position", parking);
-        print("Starting Position", starting);
 
         // Initialize hardware
         getHardwareMap();
         initCheck();
         print("Status", "Initialized");
-        getPreferences();
+        print("Alliance", teamColor);
+        print("Foundation", doFoundation);
+        print("Skystone", doSkystone);
+        print("Parking Position", parking);
+        print("Starting Position", starting);
         telemetry.update();
 
         waitForStart();
@@ -39,29 +38,26 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             while (runtime.milliseconds() < delayTime) {}
             // Transition
             encoderDrive("left", minPower, 0.25);
-            encoderDrive("front", minPower, 1);
+            encoderDrive("front", minPower, 0.25);
             // Recognize skystone
             recognizeTarget("Stone Target");
             // Grab 1st skystone
             switch (skystonePosition) {
                 case "left":
-                    encoderDrive("left", minPower, halfSkystoneDist);
+                    encoderDriveDist("left", minPower, travelX);
                     grabSkystone(minPower);
-                    encoderDrive("right", minPower, halfSkystoneDist);
                 case "center":
-                    encoderDrive("right", minPower, halfSkystoneDist);
+                    encoderDriveDist("right", minPower, travelX);
                     grabSkystone(minPower);
-                    encoderDrive("left", minPower, halfSkystoneDist);
                 case "right":
-                    encoderDrive("right", minPower, (fullSkystoneDist + halfSkystoneDist));
+                    encoderDriveDist("right", minPower, (fullSkystoneDist + halfSkystoneDist));
                     grabSkystone(minPower);
-                    encoderDrive("left", minPower, (fullSkystoneDist + halfSkystoneDist));
             }
             // Deliver 1st skystone
-            depotToBuildingsite("blue", minPower, minTurnPower);
+            depotToBuildingSite("blue", minPower, minTurnPower,);
             buildSkystone("blue", minPower, minTurnPower, 1);
             // Transition
-            buildingsiteToDepot("blue", minPower, minTurnPower);
+            buildingSiteToDepot("blue", minPower, minTurnPower);
             encoderDrive("right", minPower, 1);
             // Grab 2nd skystone
             switch (skystonePosition) {

@@ -9,17 +9,16 @@ public class BlueSkyPrkWallBuild extends MainAutonomous {
         // Initialize autonomous route
         getPreferences();
         checkPreferences();
-        print("Alliance", teamColor);
-        print("Foundation", doFoundation);
-        print("Skystone", doSkystone);
-        print("Parking Position", parking);
-        print("Starting Position", starting);
 
         // Initialize hardware
         getHardwareMap();
         initCheck();
         print("Status", "Initialized");
-        getPreferences();
+        print("Alliance", teamColor);
+        print("Foundation", doFoundation);
+        print("Skystone", doSkystone);
+        print("Parking Position", parking);
+        print("Starting Position", starting);
         telemetry.update();
 
         waitForStart();
