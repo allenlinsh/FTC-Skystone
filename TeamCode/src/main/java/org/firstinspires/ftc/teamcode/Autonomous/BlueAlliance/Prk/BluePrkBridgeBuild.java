@@ -1,14 +1,14 @@
-package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.FoundationPark;
+package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.Prk;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
-public class BlueFndPrkBridgeDepot extends MainAutonomous {
-    private String className = this.getClass().getSimpleName();
+public class BluePrkBridgeBuild extends MainAutonomous {
+    public String className = getClass().getSimpleName();
     @Override
     public void runOpMode() {
         // Initialize autonomous route
         getPreferences();
-        checkPreferences();
+        checkPreferences(className);
 
         // Initialize hardware
         getHardwareMap();
@@ -28,26 +28,21 @@ public class BlueFndPrkBridgeDepot extends MainAutonomous {
         /* Autonomous
          * Team Alliance:           Blue
          * Skystone:                No
-         * Foundation:              Yes
+         * Foundation:              No
          * Parking:                 Yes
          * Parking Position:        Bridge
-         * Start Position:          Depot
+         * Start Position:          Building Site
          */
+
         if (opModeIsActive()) {
             runtime.startTime();
             while (runtime.milliseconds() < delayTime) {}
-            // Transition
-            encoderDrive("front", minPower, 1);
-            depotToBuildingsite("blue", minPower, minTurnPower);
-            encoderDrive("left", minPower, 0.5);
-            //Grab foundation
-            grabFoundation("blue");
             // Parking
-            encoderDrive("left", minPower, 0.5);
-            encoderDrive("front", minPower, 1.875);
+            encoderDrive("front", minPower, 1);
+            gyroTurn(90, minTurnPower);
+            encoderDrive("front", minPower, 1.625);
         }
-
-        resetMotor();
+        stopAllMotors();
         visionTargets.deactivate();
     }
 }

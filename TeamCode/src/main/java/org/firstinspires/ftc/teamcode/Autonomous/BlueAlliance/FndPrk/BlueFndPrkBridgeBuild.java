@@ -1,14 +1,14 @@
-package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.Park;
+package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.FndPrk;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
-public class BluePrkWallDep extends MainAutonomous {
-    private String className = this.getClass().getSimpleName();
+public class BlueFndPrkBridgeBuild extends MainAutonomous {
+    private String className = getClass().getSimpleName();
     @Override
     public void runOpMode() {
         // Initialize autonomous route
         getPreferences();
-        checkPreferences();
+        checkPreferences(className);
 
         // Initialize hardware
         getHardwareMap();
@@ -28,18 +28,24 @@ public class BluePrkWallDep extends MainAutonomous {
         /* Autonomous
          * Team Alliance:           Blue
          * Skystone:                No
-         * Foundation:              No
+         * Foundation:              Yes
          * Parking:                 Yes
-         * Parking Position:        Wall
-         * Start Position:          Depot
+         * Parking Position:        Bridge
+         * Start Position:          Building Site
          */
+
         if (opModeIsActive()) {
             runtime.startTime();
             while (runtime.milliseconds() < delayTime) {}
-            encoderDrive("left", minPower, 1.625);
+            // Foundation
+            encoderDrive("front", minPower, 1);
+            encoderDriveDist("left", minPower, centerPlacement);
+            grabFoundation("blue");
+            // Parking
+            encoderDrive("left", minPower, 0.75);
+            encoderDrive("front", minPower, 1.625);
         }
-
-        resetMotor();
+        stopAllMotors();
         visionTargets.deactivate();
     }
 }

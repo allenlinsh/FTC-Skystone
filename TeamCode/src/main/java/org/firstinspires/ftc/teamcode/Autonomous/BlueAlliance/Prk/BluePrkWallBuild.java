@@ -1,14 +1,14 @@
-package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.Park;
+package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.Prk;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
-public class BluePrkBridgeBuild extends MainAutonomous {
-    private String className = this.getClass().getSimpleName();
+public class BluePrkWallBuild extends MainAutonomous {
+    public String className = getClass().getSimpleName();
     @Override
     public void runOpMode() {
         // Initialize autonomous route
         getPreferences();
-        checkPreferences();
+        checkPreferences(className);
 
         // Initialize hardware
         getHardwareMap();
@@ -30,18 +30,20 @@ public class BluePrkBridgeBuild extends MainAutonomous {
          * Skystone:                No
          * Foundation:              No
          * Parking:                 Yes
-         * Parking Position:        Bridge
+         * Parking Position:        Wall
          * Start Position:          Building Site
          */
+
         if (opModeIsActive()) {
             runtime.startTime();
             while (runtime.milliseconds() < delayTime) {}
             // Parking
-            encoderDrive("front", minPower, 1);
-            encoderDrive("right", minPower, 1.625);
+            encoderDrive("front", minPower, 0.25);
+            gyroTurn(90, minTurnPower);
+            encoderDrive("right", minPower, 0.25);
+            encoderDrive("front", minPower, 1.625);
         }
-
-        resetMotor();
+        stopAllMotors();
         visionTargets.deactivate();
     }
 }

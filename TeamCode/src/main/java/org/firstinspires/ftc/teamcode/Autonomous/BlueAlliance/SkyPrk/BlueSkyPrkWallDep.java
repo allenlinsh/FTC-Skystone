@@ -1,14 +1,14 @@
-package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.Everything;
+package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.SkyPrk;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
-public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
+public class BlueSkyPrkWallDep extends MainAutonomous {
     private String className = getClass().getSimpleName();
     @Override
     public void runOpMode() {
         // Initialize autonomous route
         getPreferences();
-        checkPreferences();
+        checkPreferences(className);
 
         // Initialize hardware
         getHardwareMap();
@@ -28,10 +28,10 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
         /* Autonomous
          * Team Alliance:           Blue
          * Skystone:                Yes
-         * Foundation:              Yes
+         * Foundation:              No
          * Parking:                 Yes
-         * Parking Position:        Bridge
-         * Start Position:          Depot
+         * Parking Position:        Wall
+         * Start Position:          Building Site
          */
 
         if (opModeIsActive()) {
@@ -43,26 +43,24 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
             encoderDrive("front", minPower, 0.25);
             recognizeTarget("Stone Target");
             // 1st skystone
-            encoderDriveDist("right", minPower, travelX);
-            grabSkystone(minPower);
+            encoderDrive("front", minPower, 0.75);
+            gyroTurn(90, minTurnPower);
+            encoderDrive("front", minPower, 1.25);
+            sideGrabSkystone("blue");
             playSound("ss_roger_roger");
-            depotToBuildingSite("blue", minPower, minTurnPower, 3);
-            encoderDriveDist("left", minPower, (travelX + firstPlacement));
-            buildSkystone("blue", minPower, 1);
+            encoderDrive("right", minPower, 1);
+            encoderDriveDist("front", minPower, travelX);
+            encoderDrive("back", minPower, 3);
             // 2nd skystone
-            buildingSiteToDepot("blue", minPower, minTurnPower, 4);
-            encoderDriveDist("right", minPower, (travelX + firstPlacement));
-            grabSkystone(minPower);
+            encoderDrive("front", minPower, 2);
+            encoderDrive("left", minPower, 1);
+            sideGrabSkystone("blue");
             playSound("ss_roger_roger");
-            depotToBuildingSite("blue", minPower, minTurnPower, 4);
-            encoderDriveDist("left", minPower, (travelX + secondPlacement));
-            buildSkystone("blue", minPower, 1);
-            // Foundation
-            encoderDriveDist("left", minPower, (centerPlacement - secondPlacement));
-            grabFoundation("blue");
+            encoderDrive("right", minPower, 1);
+            encoderDriveDist("front", minPower, travelX);
+            encoderDrive("back", minPower, 2);
             // Parking
-            encoderDrive("left", minPower, 0.75);
-            encoderDrive("front", minPower, 1.625);
+            encoderDrive("right", minPower, 0.625);
         }
         stopAllMotors();
         visionTargets.deactivate();

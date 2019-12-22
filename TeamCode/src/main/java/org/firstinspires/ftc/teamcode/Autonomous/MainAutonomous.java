@@ -24,7 +24,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.robotcore.internal.ui.UILocation;
-import org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.FoundationPark.BlueFndPrkBridgeDepot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,15 +121,15 @@ public class MainAutonomous extends LinearOpMode {
     public float robotHeight                    = 14.00f;
     // Distance to travel from front of robot to center of target
     public float travelX                        = fullSkystoneDist + halfSkystoneDist - (robotWidth / 2);
-    public float travelY                        = 24.00f;
+    public float travelY                        = inPerBlock;
     // Location of center of skystone placement with relation to wall
     public float firstSkystone                  = 13.25f;
     public float secondSkystone                 = 29.25f;
     public float centerSkystone                 = 21.25f;
     // Distance to travel from building site starting position to center of skystone placement (towards wall)
-    public float firstPlacement                 = 24 - firstSkystone + (robotWidth / 2);
-    public float secondPlacement                = 24 - secondSkystone + (robotWidth / 2);
-    public float centerPlacement                = 24 - centerSkystone + (robotWidth / 2);
+    public float firstPlacement                 = inPerBlock - firstSkystone + (robotWidth / 2);
+    public float secondPlacement                = inPerBlock - secondSkystone + (robotWidth / 2);
+    public float centerPlacement                = inPerBlock - centerSkystone + (robotWidth / 2);
 
     // Declare shared preference variables
     public SharedPreferences preferences;
@@ -138,7 +137,6 @@ public class MainAutonomous extends LinearOpMode {
     public boolean doFoundation, doSkystone;
     public int delayTime;
     public String autoName;
-    private String className = getClass().getSimpleName();
 
 /*
 ======================================= AUTONOMOUS PROGRAM =========================================
@@ -186,7 +184,7 @@ public class MainAutonomous extends LinearOpMode {
         starting = preferences.getString("auto_starting", "depot");
         delayTime = preferences.getInt("auto_delay_time", 0);
     }
-    public void checkPreferences() {
+    public void checkPreferences(String className) {
         if (teamColor == "blue") autoName += "Blue";
         else if (teamColor == "red") autoName += "Red";
         if (doFoundation) autoName += "Fnd";
@@ -753,22 +751,19 @@ public class MainAutonomous extends LinearOpMode {
         pause();
         gyroCorrection();
     }
-    public void stopMotor() {
-        run(0, 0, 0, 0);
+    public void gyroCorrection() {
+        runtime.reset();
+        runtime.startTime();
+        while (opModeIsActive() && checkGyro()) {
+            if (getAngle() < 0) run(-minPower, minPower, -minPower, minPower);
+            else if (getAngle() > 0) run(minPower, -minPower, minPower, -minPower);
+        }
+        stopMotor();
     }
-    public void stopAllMotors() {
-        leftBackMotor.setPower(0);
-        rightBackMotor.setPower(0);
-        leftFrontMotor.setPower(0);
-        rightFrontMotor.setPower(0);
-        armMotor.setPower(0);
-        gripMotor.setPower(0);
-    }
-    public boolean topPressed() {
-        return !topLimit.getState();
-    }
-    public boolean bottomPressed() {
-        return !bottomLimit.getState();
+    public boolean checkGyro() {
+        if (Math.abs(getAngle()) < 1) return false;
+        else if (Math.abs(getAngle()) < 3 && runtime.milliseconds() > 1000) return false;
+        else return true;
     }
     public void resetAngle() {
         lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -796,16 +791,22 @@ public class MainAutonomous extends LinearOpMode {
 
         return correction;
     }
-    public void gyroCorrection() {
-        while (opModeIsActive() && checkGyro()) {
-            if (getAngle() < 0) run(-minPower, minPower, -minPower, minPower);
-            else if (getAngle() > 0) run(minPower, -minPower, minPower, -minPower);
-        }
-        stopMotor();
+    public void stopMotor() {
+        run(0, 0, 0, 0);
     }
-    public boolean checkGyro() {
-        if (Math.abs(getAngle()) > 3) return true;
-        else return false;
+    public void stopAllMotors() {
+        leftBackMotor.setPower(0);
+        rightBackMotor.setPower(0);
+        leftFrontMotor.setPower(0);
+        rightFrontMotor.setPower(0);
+        armMotor.setPower(0);
+        gripMotor.setPower(0);
+    }
+    public boolean topPressed() {
+        return !topLimit.getState();
+    }
+    public boolean bottomPressed() {
+        return !bottomLimit.getState();
     }
     public void armExtend() {
         armMotor.setPower(-0.5);
@@ -888,27 +889,31 @@ public class MainAutonomous extends LinearOpMode {
         encoderDrive("back", minPower, 0.75);
         hookOff();
     }
-    public void recognizeSkystone(String alliance) {
-        int waitTime = 300;
-        switch (alliance) {
-            case "blue":
-                while(opModeIsActive() && round(leftSkystoneServo.getPosition(), 2) != 0.98) {
-                    runtime.reset();
-                    runtime.startTime();
-                    leftColorThreshold = leftColorSensor.red() * leftColorSensor.green() / (leftColorSensor.blue() * leftColorSensor.blue());
-                    if (leftColorThreshold <= 3) captureLeftSkystone();
-                    else encoderDriveDist("back", minPower, fullSkystoneDist);
-                    while(opModeIsActive() && runtime.milliseconds() < waitTime) {}
-                }
-            case "red":
-                while(opModeIsActive() && round(rightSkystoneServo.getPosition(), 2) != 0.52) {
-                    runtime.reset();
-                    runtime.startTime();
-                    rightColorThreshold = rightColorSensor.red() * rightColorSensor.green() / (rightColorSensor.blue() * rightColorSensor.blue());
-                    if (rightColorThreshold <= 3) captureRightSkystone();
-                    else encoderDriveDist("back", minPower, fullSkystoneDist);
-                    while(opModeIsActive() && runtime.milliseconds() < waitTime) {}
-                }
+    public void sideGrabSkystone(String alliance) {
+        if (alliance == "blue") {
+            switch (skystonePosition) {
+                case "left":
+                    travelX = 2 * fullSkystoneDist;
+
+                case "center":
+                    travelX = fullSkystoneDist;
+            }
+            encoderDriveDist("back", minPower, travelX);
+            encoderDrive("left", minPower, 0.25);
+            captureLeftSkystone();
+            encoderDrive("right", minPower, 0.25);
+        }
+        else if (alliance == "red") {
+            switch (skystonePosition) {
+                case "right":
+                    travelX = 2 * fullSkystoneDist;
+                case "center":
+                    travelX = fullSkystoneDist;
+            }
+            encoderDriveDist("back", minPower, travelX);
+            encoderDrive("right", minPower, 0.25);
+            encoderDrive("left", minPower, 0.25);
+            captureRightSkystone();
         }
     }
     public void grabSkystone(double power) {
