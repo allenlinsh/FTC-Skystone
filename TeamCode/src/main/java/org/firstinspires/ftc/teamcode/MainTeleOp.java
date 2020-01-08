@@ -49,6 +49,8 @@ public class MainTeleOp extends LinearOpMode {
     private double armPower, gripPower;
     private double leftBackPower, rightBackPower, leftFrontPower, rightFrontPower;
     private boolean reachTop = false, reachBottom = false;
+    private boolean wasDpadUp = false, wasDpadDown = false, wasDpadLeft = false,
+            wasDpadRight = false, wasX1 = false, wasX2 = false, wasB1 = false, wasB2 = false;
 
     @Override
     public void runOpMode() {
@@ -94,59 +96,43 @@ public class MainTeleOp extends LinearOpMode {
             gripMotor.setPower(gripPower);
 
             // Left skystone grabber
-            if (noStart && gamepad2.x) {
+            if (noStart && gamepad2.x && !wasX2) {
                 // Grabber on
                 if (leftSkystoneServo.getPosition() < 0.98) leftSkystoneServo.setPosition(0.98);
-                    // Grabber off
+                // Grabber off
                 else if (leftSkystoneServo.getPosition() > 0.52) leftSkystoneServo.setPosition(0.52);
             }
             // Right skystone grabber
-            else if (noStart && gamepad2.b) {
+            else if (noStart && gamepad2.b && !wasB2) {
                 // Grabber on
                 if (rightSkystoneServo.getPosition() > 0.52) rightSkystoneServo.setPosition(0.52);
-                    // Grabber off
+                // Grabber off
                 else if (rightSkystoneServo.getPosition() < 0.98) rightSkystoneServo.setPosition(0.98);
             }
 
             // Dpad movement
             if (gamepad1.left_stick_y == 0 && gamepad1.left_stick_x == 0 && gamepad1.right_stick_x == 0) {
-                // Slow left
-                if (gamepad1.dpad_left) driveLateral = -(minPower + slowGain) * lateralFactor;
-                // Slow right
-                if (gamepad1.dpad_right) driveLateral = (minPower + slowGain) * lateralFactor;
                 // Slow forward
-                if (gamepad1.dpad_up) driveAxial = -(minPower + slowGain);
+                if (gamepad1.dpad_up && !wasDpadUp) driveAxial = -(minPower + slowGain);
                 // Slow backward
-                if (gamepad1.dpad_down) driveAxial = (minPower + slowGain);
+                if (gamepad1.dpad_down && !wasDpadDown) driveAxial = (minPower + slowGain);
+                // Slow left
+                if (gamepad1.dpad_left && !wasDpadLeft) driveLateral = -(minPower + slowGain) * lateralFactor;
+                // Slow right
+                if (gamepad1.dpad_right && !wasDpadRight) driveLateral = (minPower + slowGain) * lateralFactor;
                 // Slow counter-clockwise
-                if (noStart && gamepad1.x) driveYaw = -(minTurnPower + slowGain);
+                if (noStart && gamepad1.x && !wasX1) driveYaw = -(minTurnPower + slowGain);
                 // Slow clockwise
-                if (noStart && gamepad1.b) driveYaw = (minTurnPower + slowGain);
+                if (noStart && gamepad1.b && !wasB1) driveYaw = (minTurnPower + slowGain);
             }
             // Joystick movement
             else {
                 // set axial movement to logarithmic values and set a dead zone
-                driveAxial = gamepad1.left_stick_y;
-                if (Math.abs(driveAxial) < Math.sqrt(0.1)) driveAxial = 0;
-                else {
-                    driveAxial = driveAxial * maxPower;
-                    driveAxial = Math.signum(driveAxial) * driveAxial * driveAxial;
-                }
+                driveAxial = (Math.abs(gamepad1.left_stick_y) < Math.sqrt(0.1)) ? 0 : Math.signum(gamepad1.left_stick_y) * Math.pow((gamepad1.left_stick_y * maxPower), 2);
                 // set lateral movement to logarithmic values and set a dead zone
-                driveLateral = gamepad1.left_stick_x;
-                if (Math.abs(driveLateral) < Math.sqrt(0.1)) driveLateral = 0;
-                else {
-                    driveLateral = driveLateral * maxPower;
-                    driveLateral = Math.signum(driveLateral) * driveLateral * driveLateral;
-                    driveLateral = driveLateral * lateralFactor;
-                }
+                driveLateral = (Math.abs(gamepad1.left_stick_x) < Math.sqrt(0.1)) ? 0 : Math.signum(gamepad1.left_stick_x) * Math.pow((gamepad1.left_stick_x * maxPower), 2) * lateralFactor;
                 // set yaw movement to logarithmic values and set a dead zone
-                driveYaw = gamepad1.right_stick_x;
-                if (Math.abs(driveYaw) < Math.sqrt(0.1)) driveYaw = 0;
-                else {
-                    driveYaw = driveYaw * maxPower;
-                    driveYaw = Math.signum(driveYaw) * driveYaw * driveYaw;
-                }
+                driveYaw = (Math.abs(gamepad1.right_stick_x) < Math.sqrt(0.1)) ? 0 : Math.signum(gamepad1.right_stick_x) * Math.pow((gamepad1.right_stick_x * maxPower), 2);
             }
 
             leftBackPower = round((-driveLateral - driveAxial + driveYaw), 2);
@@ -157,19 +143,24 @@ public class MainTeleOp extends LinearOpMode {
                     || gamepad1.right_stick_x != 0 || gamepad1.dpad_up
                     || gamepad1.dpad_down || gamepad1.dpad_left
                     || gamepad1.dpad_right || gamepad1.x
-                    || gamepad1.b) {
-                run(leftBackPower, rightBackPower, leftFrontPower, rightFrontPower);
-            }
-            else {
-                stopMotor();
-            }
+                    || gamepad1.b) run(leftBackPower, rightBackPower, leftFrontPower, rightFrontPower);
+            else stopMotor();
 
             // Arm stops if top or bottom limit is on
             reachTop = (topPressed() && !resetArm) ? true : false;
             reachBottom = (bottomPressed() && !resetArm) ? true : false;
-
             armPower = ((armPower > 0 && reachTop) || (armPower < 0 && reachBottom)) ? 0 : gamepad2.left_stick_y;
             armMotor.setPower(armPower);
+
+            // Remember the last state of dpad to detect changes
+            wasDpadUp       = gamepad1.dpad_up;
+            wasDpadDown     = gamepad1.dpad_down;
+            wasDpadLeft     = gamepad1.dpad_left;
+            wasDpadRight    = gamepad1.dpad_right;
+            wasX1           = gamepad1.x;
+            wasB1           = gamepad1.b;
+            wasX2           = gamepad2.x;
+            wasB2           = gamepad2.b;
 
             telemetry.addData("Left Back Power", leftBackPower);
             telemetry.addData("Right Back Power", rightBackPower);

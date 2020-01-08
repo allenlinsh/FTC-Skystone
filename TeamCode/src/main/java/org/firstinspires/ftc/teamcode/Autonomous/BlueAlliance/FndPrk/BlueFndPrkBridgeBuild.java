@@ -1,7 +1,10 @@
 package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.FndPrk;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
+@Autonomous(name = "BlueFndPrkBridgeBuild", group = "FndPrk")
 public class BlueFndPrkBridgeBuild extends MainAutonomous {
     private String className = getClass().getSimpleName();
     @Override

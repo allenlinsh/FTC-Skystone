@@ -1,7 +1,10 @@
 package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.Prk;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
+@Autonomous(name = "BluePrkWallDep", group = "Prk")
 public class BluePrkWallDep extends MainAutonomous {
     public String className = getClass().getSimpleName();
     @Override
@@ -41,6 +44,8 @@ public class BluePrkWallDep extends MainAutonomous {
             encoderDrive("front", minPower, 0.25);
             gyroTurn(90, minTurnPower);
             encoderDrive("right", minPower, 0.25);
+            armExtend();
+            gripRelease(300);
             encoderDrive("back", minPower, 1.625);
         }
         stopAllMotors();
