@@ -49,8 +49,6 @@ public class MainTeleOp extends LinearOpMode {
     private double armPower, gripPower;
     private double leftBackPower, rightBackPower, leftFrontPower, rightFrontPower;
     private boolean reachTop = false, reachBottom = false;
-    private boolean wasDpadUp = false, wasDpadDown = false, wasDpadLeft = false,
-            wasDpadRight = false, wasX1 = false, wasX2 = false, wasB1 = false, wasB2 = false;
 
     @Override
     public void runOpMode() {
@@ -96,34 +94,36 @@ public class MainTeleOp extends LinearOpMode {
             gripMotor.setPower(gripPower);
 
             // Left skystone grabber
-            if (noStart && gamepad2.x && !wasX2) {
+            if (noStart && gamepad2.x) {
                 // Grabber on
                 if (leftSkystoneServo.getPosition() < 0.98) leftSkystoneServo.setPosition(0.98);
                 // Grabber off
                 else if (leftSkystoneServo.getPosition() > 0.52) leftSkystoneServo.setPosition(0.52);
+                pause();
             }
             // Right skystone grabber
-            else if (noStart && gamepad2.b && !wasB2) {
+            else if (noStart && gamepad2.b) {
                 // Grabber on
                 if (rightSkystoneServo.getPosition() > 0.52) rightSkystoneServo.setPosition(0.52);
                 // Grabber off
                 else if (rightSkystoneServo.getPosition() < 0.98) rightSkystoneServo.setPosition(0.98);
+                pause();
             }
 
             // Dpad movement
             if (gamepad1.left_stick_y == 0 && gamepad1.left_stick_x == 0 && gamepad1.right_stick_x == 0) {
                 // Slow forward
-                if (gamepad1.dpad_up && !wasDpadUp) driveAxial = -(minPower + slowGain);
+                if (gamepad1.dpad_up) driveAxial = -(minPower + slowGain);
                 // Slow backward
-                if (gamepad1.dpad_down && !wasDpadDown) driveAxial = (minPower + slowGain);
+                if (gamepad1.dpad_down) driveAxial = (minPower + slowGain);
                 // Slow left
-                if (gamepad1.dpad_left && !wasDpadLeft) driveLateral = -(minPower + slowGain) * lateralFactor;
+                if (gamepad1.dpad_left) driveLateral = -(minPower + slowGain) * lateralFactor;
                 // Slow right
-                if (gamepad1.dpad_right && !wasDpadRight) driveLateral = (minPower + slowGain) * lateralFactor;
+                if (gamepad1.dpad_right) driveLateral = (minPower + slowGain) * lateralFactor;
                 // Slow counter-clockwise
-                if (noStart && gamepad1.x && !wasX1) driveYaw = -(minTurnPower + slowGain);
+                if (noStart && gamepad1.x) driveYaw = -(minTurnPower + slowGain);
                 // Slow clockwise
-                if (noStart && gamepad1.b && !wasB1) driveYaw = (minTurnPower + slowGain);
+                if (noStart && gamepad1.b) driveYaw = (minTurnPower + slowGain);
             }
             // Joystick movement
             else {
@@ -151,16 +151,6 @@ public class MainTeleOp extends LinearOpMode {
             reachBottom = (bottomPressed() && !resetArm) ? true : false;
             armPower = ((armPower > 0 && reachTop) || (armPower < 0 && reachBottom)) ? 0 : gamepad2.left_stick_y;
             armMotor.setPower(armPower);
-
-            // Remember the last state of dpad to detect changes
-            wasDpadUp       = gamepad1.dpad_up;
-            wasDpadDown     = gamepad1.dpad_down;
-            wasDpadLeft     = gamepad1.dpad_left;
-            wasDpadRight    = gamepad1.dpad_right;
-            wasX1           = gamepad1.x;
-            wasB1           = gamepad1.b;
-            wasX2           = gamepad2.x;
-            wasB2           = gamepad2.b;
 
             telemetry.addData("Left Back Power", leftBackPower);
             telemetry.addData("Right Back Power", rightBackPower);
@@ -312,7 +302,7 @@ public class MainTeleOp extends LinearOpMode {
         armMotor.setPower(0);
         gripMotor.setPower(0);
     }
-    public void pause() {sleep(150);}
+    public void pause() {sleep(500);}
     public boolean topPressed() {return !topLimit.getState();}
     public boolean bottomPressed() {return !bottomLimit.getState();}
 }

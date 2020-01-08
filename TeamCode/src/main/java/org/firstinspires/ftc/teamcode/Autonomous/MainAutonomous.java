@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.ftccommon.SoundPlayer;
+import java.lang.reflect.Array;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -38,11 +39,11 @@ References:
 -Gyro Correction: https://stemrobotics.cs.pdx.edu/node/7265
  */
 
-@Autonomous
+@Autonomous(name = "MainAutonomous", group = "M")
 public class MainAutonomous extends LinearOpMode {
-/*
-======================================== DECLARE VARIABLES =========================================
- */
+    /*
+    ======================================== DECLARE VARIABLES =========================================
+     */
     // Declare hardware variables
     public BNO055IMU imu;
     public DcMotor leftBackMotor, rightBackMotor, leftFrontMotor, rightFrontMotor, armMotor, gripMotor;
@@ -134,11 +135,11 @@ public class MainAutonomous extends LinearOpMode {
     public String teamColor, parking, starting;
     public boolean doFoundation, doSkystone;
     public int delayTime;
-    public String autoName;
+    public StringBuilder autoName = new StringBuilder("");
 
-/*
-======================================= AUTONOMOUS PROGRAM =========================================
- */
+    /*
+    ======================================= AUTONOMOUS PROGRAM =========================================
+     */
     @Override
     public void runOpMode() {
         encoderDrive("front", minPower, 1);
@@ -146,9 +147,9 @@ public class MainAutonomous extends LinearOpMode {
         gyroTurn(90, minTurnPower);
         gyroTurn(-90, minTurnPower);
     }
-/*
-======================================== DECLARE FUNCTIONS =========================================
- */
+    /*
+    ======================================== DECLARE FUNCTIONS =========================================
+     */
     // General functions
     public void print(String caption, Object message) {
         telemetry.addData(caption, message);
@@ -174,24 +175,24 @@ public class MainAutonomous extends LinearOpMode {
     // Init functions
     public void getPreferences() {
         preferences = PreferenceManager.getDefaultSharedPreferences(hardwareMap.appContext);
-        teamColor = preferences.getString("auto_team_color", "blue");
-        doFoundation = preferences.getBoolean("auto_do_foundation", true);
-        doSkystone = preferences.getBoolean("auto_do_skystone", false);
-        parking = preferences.getString("auto_parking", "bridge");
-        starting = preferences.getString("auto_starting", "depot");
-        delayTime = preferences.getInt("auto_delay_time", 0);
+        teamColor = String.valueOf(preferences.getString("auto_team_color", "blue"));
+        doFoundation = Boolean.valueOf(preferences.getBoolean("auto_do_foundation", true));
+        doSkystone = Boolean.valueOf(preferences.getBoolean("auto_do_skystone", false));
+        parking = String.valueOf(preferences.getString("auto_parking", "bridge"));
+        starting = String.valueOf(preferences.getString("auto_starting", "depot"));
+        delayTime = Integer.valueOf(preferences.getString("auto_delay_time", "0"));
     }
     public void checkPreferences(String className) {
-        if (teamColor == "blue") autoName += "Blue";
-        else if (teamColor == "red") autoName += "Red";
-        if (doFoundation) autoName += "Fnd";
-        if (doSkystone) autoName += "Sky";
-        if (parking == "bridge") autoName += "Bridge";
-        else if (parking == "wall") autoName += "Wall";
-        if (starting == "depot") autoName += "Dep";
-        else if (starting == "buildingSite") autoName += "Build";
+        if (teamColor == "blue") autoName.append("Blue");
+        else if (teamColor == "red") autoName.append("Red");
+        if (doFoundation) autoName.append("Fnd");
+        if (doSkystone) autoName.append("Sky");
+        if (parking == "bridge") autoName.append("Bridge");
+        else if (parking == "wall") autoName.append("Wall");
+        if (starting == "depot") autoName.append("Dep");
+        else if (starting == "buildingSite") autoName.append("Build");
 
-        if (className != autoName) {
+        if (className != autoName.toString()) {
             requestOpModeStop();
         }
         else AppUtil.getInstance().showToast(UILocation.BOTH, "Selected Autonomous mode - \'" + autoName + "\'", 5000);
@@ -511,7 +512,6 @@ public class MainAutonomous extends LinearOpMode {
                 while(opModeIsActive() && runtime.milliseconds() < duration) {}
         }
         stopMotor();
-        gyroCorrection();
     }
     public void timeTurn(String direction, double power, int duration) {
         runtime.reset();
@@ -526,8 +526,6 @@ public class MainAutonomous extends LinearOpMode {
         }
         resetAngle();
         stopMotor();
-        pause();
-        gyroCorrection();
     }
     public void encoderDrive(String direction, double power, double block) {
         double distance = block * inPerBlock;
@@ -570,7 +568,6 @@ public class MainAutonomous extends LinearOpMode {
         while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy()
                 && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {}
         stopMotor();
-        gyroCorrection();
     }
     public void testEncoderDrive(double power, double block) {
         double circumference    = Math.PI * 3.75;
@@ -581,7 +578,6 @@ public class MainAutonomous extends LinearOpMode {
         run(power, power, power, power);
         while(opModeIsActive() && leftFrontMotor.isBusy()) {}
         stopMotor();
-        gyroCorrection();
     }
     public void setEncoder(String direction, int distance) {
         leftBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -649,9 +645,9 @@ public class MainAutonomous extends LinearOpMode {
             rightPower = -power;
         }
         else return;
-        
+
         run(leftPower, rightPower, leftPower, rightPower);
-        
+
         if (angle < 0) {
             while (opModeIsActive() && getAngle() == 0) {}
             while (opModeIsActive() && getAngle() > angle) {}
@@ -659,7 +655,7 @@ public class MainAutonomous extends LinearOpMode {
         else {
             while (opModeIsActive() && getAngle() < angle) {}
         }
-        
+
         resetAngle();
         stopMotor();
         pause();
