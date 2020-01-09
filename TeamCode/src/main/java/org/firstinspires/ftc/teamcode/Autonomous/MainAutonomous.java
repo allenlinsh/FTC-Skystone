@@ -39,7 +39,7 @@ References:
 -Gyro Correction: https://stemrobotics.cs.pdx.edu/node/7265
  */
 
-@Autonomous(name = "MainAutonomous", group = "M")
+@Autonomous
 public class MainAutonomous extends LinearOpMode {
     /*
     ======================================== DECLARE VARIABLES =========================================
@@ -633,6 +633,7 @@ public class MainAutonomous extends LinearOpMode {
         else if (power > maxTurnPower) power = maxTurnPower;
 
         double leftPower, rightPower;
+        double fixScale = 0.13888;
 
         resetAngle();
 
@@ -650,16 +651,15 @@ public class MainAutonomous extends LinearOpMode {
 
         if (angle < 0) {
             while (opModeIsActive() && getAngle() == 0) {}
-            while (opModeIsActive() && getAngle() > angle) {}
+            while (opModeIsActive() && getAngle() > angle + angle * fixScale) {}
         }
         else {
-            while (opModeIsActive() && getAngle() < angle) {}
+            while (opModeIsActive() && getAngle() < angle - angle * fixScale) {}
+            telemetry.addData("angle",getAngle());
+            telemetry.update();
         }
-
         resetAngle();
         stopMotor();
-        pause();
-        gyroCorrection();
     }
     // TODO
     public void gyroCurve(int angle, double power) {
@@ -726,7 +726,7 @@ public class MainAutonomous extends LinearOpMode {
         else if (deltaAngle > 180) deltaAngle -= 360;
         globalAngle += deltaAngle;
         lastAngles = angles;
-        return globalAngle;
+        return -globalAngle;
     }
     public double checkDirection() {
         // The gain value determines how sensitive the correction is to direction changes.
