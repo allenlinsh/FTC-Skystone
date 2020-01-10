@@ -70,6 +70,7 @@ public class MainAutonomous extends LinearOpMode {
     public double minTurnPower = 0.35;
     public double maxTurnPower = round((90.0/127.0), 2);
     public int timePerBlock = 1350;
+    public int timePer90Deg = 1000;
 
     // Declare vuforia variables
     public VuforiaLocalizer vuforia;
@@ -193,6 +194,7 @@ public class MainAutonomous extends LinearOpMode {
         else if (starting == "buildingSite") autoName.append("Build");
 
         if (className != autoName.toString()) {
+            AppUtil.getInstance().showToast(UILocation.BOTH, "Selected Autonomous mode - \'" + autoName + "\'", 5000);
             requestOpModeStop();
         }
         else AppUtil.getInstance().showToast(UILocation.BOTH, "Selected Autonomous mode - \'" + autoName + "\'", 5000);
@@ -535,69 +537,77 @@ public class MainAutonomous extends LinearOpMode {
         if (power < minPower) power = minPower;
         else if (power > maxPower) power = maxPower;
 
-        // The factor value determines the scaling factor to normalize each movement
-        double axialFactor    = 1.0;
-        double lateralFactor      = 2.0;
-        double diagonalFactor    = 3.25;
-
-        double axialPower     = round((power * axialFactor), 2);
-        double lateralPower       = round((power * lateralFactor), 2);
-        double diagonalPower     = round((power * diagonalFactor), 2);
-
         double circumference    = Math.PI * 3.75;
         double inPerRev         = circumference / ticksPerRev;
-        int distance            = (int)(dist / inPerRev);
-        int diagonalDistance     = (int)(dist * Math.sqrt(2) / inPerRev);
+        int axialDistance       = (int)(dist / inPerRev);
+        int lateralDistance     = (int)(dist * Math.sqrt(2) / inPerRev);
+        int diagonalDistance    = (int)(dist * Math.sqrt(2) / inPerRev);
+        int maxRuntime          = (int)(timePerBlock * dist / 24);
 
-        if (direction == "front" || direction == "back") {
-            setEncoder(direction, distance);
-            run(axialPower, axialPower, axialPower, axialPower);
-        }
-        else if (direction == "left" || direction == "right") {
-            setEncoder(direction, distance);
-            run(lateralPower, lateralPower, lateralPower, lateralPower);
-        }
-        else if (direction == "front left" || direction == "back right") {
-            setEncoder(direction, diagonalDistance);
-            run(diagonalPower, 0, 0, diagonalPower);
-        }
-        else if (direction == "front right" || direction == "back left") {
-            setEncoder(direction, diagonalDistance);
-            run(0, diagonalPower, diagonalPower, 0);
-        }
-        while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy()
-                && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {}
-        stopMotor();
-    }
-    public void testEncoderDrive(double power, double block) {
-        double circumference    = Math.PI * 3.75;
-        double inPerRev         = circumference / ticksPerRev;
-        int distance            = (int)(block * inPerBlock / inPerRev);
-
-        setEncoder("front", distance);
-        run(power, power, power, power);
-        while(opModeIsActive() && leftFrontMotor.isBusy()) {}
-        stopMotor();
-    }
-    public void setEncoder(String direction, int distance) {
         leftBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFrontMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFrontMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        switch (direction) {
-            case "front": set(distance, distance, distance, distance);
-            case "back": set(-distance, -distance, -distance, -distance);
-            case "left": set(distance, -distance, -distance, distance);
-            case "right": set(-distance, distance, distance, -distance);
-            case "front left": set(distance, 0, 0, distance);
-            case "front right": set(0, distance, distance, 0);
-            case "back left": set(0, -distance, -distance, 0);
-            case "back right": set(-distance, 0, 0, -distance);
-        }
+
+        if (direction == "front") { set(axialDistance, axialDistance, axialDistance, axialDistance); }
+        if (direction == "back") { set(-axialDistance, -axialDistance, -axialDistance, -axialDistance); }
+        if (direction == "left") { set(lateralDistance, -lateralDistance, -lateralDistance, lateralDistance); }
+        if (direction == "right") { set(-lateralDistance, lateralDistance, lateralDistance, -lateralDistance); }
+        if (direction == "front left") { set(diagonalDistance, 0, 0, diagonalDistance); }
+        if (direction == "front right") { set(0, diagonalDistance, diagonalDistance, 0); }
+        if (direction == "back left") { set(0, -diagonalDistance, -diagonalDistance, 0); }
+        if (direction == "back right") { set(-diagonalDistance, 0, 0, -diagonalDistance); }
+
         leftBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        runtime.reset();
+        runtime.startTime();
+        run(power, power, power, power);
+        while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy() && runtime.milliseconds() < maxRuntime) {
+            telemetry.addData("axialdist",axialDistance);
+            telemetry.addData("lateraldist",lateralDistance);
+            telemetry.addData("diagonalDist",diagonalDistance);
+            telemetry.addData("backleft", leftBackMotor.getCurrentPosition());
+            telemetry.addData("backright", rightBackMotor.getCurrentPosition());
+            telemetry.addData("frontleft", leftFrontMotor.getCurrentPosition());
+            telemetry.addData("frontright", rightFrontMotor.getCurrentPosition());
+            telemetry.update();
+        }
+        stopMotor();
+    }
+    public void testEncoderDrive(String direction, double power, double block) {
+        double circumference    = Math.PI * 3.75;
+        double inPerRev         = circumference / ticksPerRev;
+        int distance            = (int)(block * inPerBlock / inPerRev);
+
+        leftBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFrontMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        if (direction == "front") { set(distance, distance, distance, distance); }
+        if (direction == "back") { set(-distance, -distance, -distance, -distance); }
+        if (direction == "left") { set(distance, -distance, -distance, distance); }
+        if (direction == "right") { set(-distance, distance, distance, -distance); }
+        if (direction == "front left") { set(distance, 0, 0, distance); }
+        if (direction == "front right") { set(0, distance, distance, 0); }
+        if (direction == "back left") { set(0, -distance, -distance, 0); }
+        if (direction == "back right") { set(-distance, 0, 0, -distance); }
+        leftBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        run(power, power, power, power);
+        while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {
+            telemetry.addData("backleft", leftBackMotor.getCurrentPosition());
+            telemetry.addData("backright", rightBackMotor.getCurrentPosition());
+            telemetry.addData("frontleft", leftFrontMotor.getCurrentPosition());
+            telemetry.addData("frontright", rightFrontMotor.getCurrentPosition());
+            telemetry.update();
+        }
+        stopMotor();
     }
     // TODO
     public void encoderDriveSmooth(int distance) {
@@ -634,6 +644,7 @@ public class MainAutonomous extends LinearOpMode {
 
         double leftPower, rightPower;
         double fixScale = 0.13888;
+        int maxRuntime = (int)(timePer90Deg * angle / 90);
 
         resetAngle();
 
@@ -647,16 +658,16 @@ public class MainAutonomous extends LinearOpMode {
         }
         else return;
 
+        runtime.reset();
+        runtime.startTime();
         run(leftPower, rightPower, leftPower, rightPower);
 
         if (angle < 0) {
             while (opModeIsActive() && getAngle() == 0) {}
-            while (opModeIsActive() && getAngle() > angle + angle * fixScale) {}
+            while (opModeIsActive() && getAngle() > angle + angle * fixScale && runtime.milliseconds() < maxRuntime) {}
         }
         else {
-            while (opModeIsActive() && getAngle() < angle - angle * fixScale) {}
-            telemetry.addData("angle",getAngle());
-            telemetry.update();
+            while (opModeIsActive() && getAngle() < angle - angle * fixScale && runtime.milliseconds() < maxRuntime) {}
         }
         resetAngle();
         stopMotor();
@@ -668,37 +679,31 @@ public class MainAutonomous extends LinearOpMode {
 
         double leftPower, rightPower;
         double gainPower = power * (Math.sqrt(2) - 1);
-        boolean rotating = true;
+        double fixScale = 0.13888;
 
         resetAngle();
 
         if (angle < 0) {
-            leftPower = -power + gainPower;
-            rightPower = power + gainPower;
+            leftPower = -power;
+            rightPower = power + 2 * gainPower;
         }
         else if (angle > 0) {
-            leftPower = power + gainPower;
-            rightPower = -power + gainPower;
+            leftPower = -power;
+            rightPower = -power + 2 * gainPower;
         }
         else return;
 
         run(leftPower, rightPower, leftPower, rightPower);
 
-        while (opModeIsActive() && rotating) {
-            if (angle < 0) {
-                while (opModeIsActive() && getAngle() == 0) {}
-                while (opModeIsActive() && getAngle() > angle) {}
-                rotating = false;
-            }
-            else {
-                while (opModeIsActive() && getAngle() < angle) {}
-                rotating = false;
-            }
+        if (angle < 0) {
+            while (opModeIsActive() && getAngle() == 0) {}
+            while (opModeIsActive() && getAngle() > angle + angle * fixScale) {}
+        }
+        else {
+            while (opModeIsActive() && getAngle() < angle - angle * fixScale) {}
         }
         resetAngle();
         stopMotor();
-        pause();
-        gyroCorrection();
     }
     public void gyroCorrection() {
         runtime.reset();

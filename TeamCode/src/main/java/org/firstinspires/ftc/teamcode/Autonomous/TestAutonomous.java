@@ -27,16 +27,22 @@ public class TestAutonomous extends MainAutonomous {
             runtime.startTime();
             while (runtime.milliseconds() < delayTime) {}
             // Parking
-            timeDrive("front",minPower,1000);
-            timeDrive("back",minPower,1000);
-            timeTurn("clockwise", minTurnPower, 500);
-            timeTurn("counter-clockwise", minTurnPower, 500);
-            encoderDrive("front", minPower, 1);
-            encoderDrive("back", minPower, 1);
-            gyroTurn(90,minTurnPower);
+            //playSound("ss_power_up");
+            //playSound("ss_roger_roger");
+            //timeDrive("front",minPower,1000);
+            //timeDrive("back",minPower,1000);
+            //timeTurn("clockwise", minTurnPower, 500);
+            //timeTurn("counter-clockwise", minTurnPower, 500);
+
+            encoderDrive("front",minPower, 1);
             gyroTurn(-90,minTurnPower);
-            armExtend();
-            armCollapse();
+            encoderDrive("front",minPower, 0.5);
+            gyroTurn(-90,minTurnPower);
+            //encoderDrive("front",minPower, 1);
+            //gyroTurn(-90,minTurnPower);
+            //encoderDrive("front",minPower, 0.5);
+
+            //gyroCurve(-90,minTurnPower);
         }
         stopAllMotors();
         visionTargets.deactivate();
