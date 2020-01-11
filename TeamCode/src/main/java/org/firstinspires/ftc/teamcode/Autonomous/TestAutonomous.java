@@ -26,22 +26,44 @@ public class TestAutonomous extends MainAutonomous {
         if (opModeIsActive()) {
             runtime.startTime();
             while (runtime.milliseconds() < delayTime) {}
-            // Parking
-            //playSound("ss_power_up");
-            //playSound("ss_roger_roger");
-            //timeDrive("front",minPower,1000);
-            //timeDrive("back",minPower,1000);
-            //timeTurn("clockwise", minTurnPower, 500);
-            //timeTurn("counter-clockwise", minTurnPower, 500);
+            playSound("ss_power_up");
+
+            timeDrive("front",minPower,motorTimePerBlock);
+            timeDrive("back",minPower,motorTimePerBlock);
 
             encoderDrive("front",minPower, 1);
+            encoderDrive("back",minPower, 1);
+
+            timeTurn("clockwise", minTurnPower, motorTimePer90Deg);
+            timeTurn("counter-clockwise", minTurnPower, motorTimePer90Deg);
+
+            gyroTurn(90,minTurnPower);
             gyroTurn(-90,minTurnPower);
-            encoderDrive("front",minPower, 0.5);
-            gyroTurn(-90,minTurnPower);
-            //encoderDrive("front",minPower, 1);
-            //gyroTurn(-90,minTurnPower);
-            //encoderDrive("front",minPower, 0.5);
-            //gyroCurve(-90,minTurnPower);
+
+            gyroCurve(90,minTurnPower);
+            gyroTurn(180,minTurnPower);
+            gyroCurve(90,minTurnPower)
+            ;
+            gyroCurve(-90,minTurnPower);
+            gyroTurn(180,minTurnPower);
+            gyroCurve(-90,minTurnPower);
+
+            hookOn();
+            hookOff();
+
+            captureLeftSkystone();
+            captureRightSkystone();
+            collapseSkystone();
+
+            armExtend();
+            armRaise(500);
+            gripRelease(150);
+            armDrop(500);
+            gripHold(150);
+            armCollapse();
+
+            recognizeTarget("Stone Target");
+            recognizeSkystone("blue");
         }
         stopAllMotors();
         visionTargets.deactivate();

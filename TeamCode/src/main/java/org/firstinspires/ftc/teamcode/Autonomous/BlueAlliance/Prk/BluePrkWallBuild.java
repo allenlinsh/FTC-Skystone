@@ -45,7 +45,6 @@ public class BluePrkWallBuild extends MainAutonomous {
             gyroTurn(90, minTurnPower);
             encoderDrive("right", minPower, 0.25);
             armExtend();
-            gripRelease(300);
             encoderDrive("front", minPower, 1.625);
         }
         stopAllMotors();

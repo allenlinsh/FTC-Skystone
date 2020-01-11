@@ -44,8 +44,9 @@ public class BlueFndPrkWallBuild extends MainAutonomous {
             encoderDrive("front", minPower, 1);
             encoderDriveDist("left", minPower, centerPlacement);
             grabFoundation("blue");
-            // Parking
             encoderDrive("right", minPower, 0.25);
+            armExtend();
+            // Parking
             encoderDrive("front", minPower, 1.625);
         }
         stopAllMotors();

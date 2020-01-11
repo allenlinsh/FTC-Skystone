@@ -44,9 +44,12 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
             encoderDrive("front", minPower, 1);
             encoderDriveDist("left", minPower, centerPlacement);
             grabFoundation("blue");
+            armExtend();
             // Parking
-            encoderDrive("left", minPower, 0.75);
+            encoderDrive("right", minPower, 0.25);
+            encoderDrive("left", minPower, 1);
             encoderDrive("front", minPower, 1.625);
+            encoderDrive("left", minPower, 0.25);
         }
         stopAllMotors();
         visionTargets.deactivate();

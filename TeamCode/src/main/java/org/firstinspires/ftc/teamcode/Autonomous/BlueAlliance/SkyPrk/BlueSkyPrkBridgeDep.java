@@ -45,22 +45,24 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             encoderDrive("left", minPower, 0.25);
             encoderDrive("front", minPower, 0.25);
             recognizeTarget("Stone Target");
+            playSound("ss_roger_roger");
             // 1st skystone
             encoderDrive("front", minPower, 0.75);
             gyroTurn(90, minTurnPower);
             encoderDrive("front", minPower, 1.25);
             sideGrabSkystone("blue");
-            playSound("ss_roger_roger");
             encoderDriveDist("front", minPower, travelX);
             encoderDrive("back", minPower, 3);
             // 2nd skystone
             encoderDrive("front", minPower, 2);
             sideGrabSkystone("blue");
-            playSound("ss_roger_roger");
             encoderDriveDist("front", minPower, travelX);
             encoderDrive("back", minPower, 2);
             // Parking
-            encoderDrive("right", minPower, 0.625);
+            encoderDrive("front", minPower, 1);
+            armExtend();
+            encoderDrive("back", minPower, 0.625);
+            encoderDrive("left", minPower, 0.25);
         }
         stopAllMotors();
         visionTargets.deactivate();

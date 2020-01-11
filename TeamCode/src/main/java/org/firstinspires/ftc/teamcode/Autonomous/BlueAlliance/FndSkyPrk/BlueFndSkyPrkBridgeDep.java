@@ -45,10 +45,10 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
             encoderDrive("left", minPower, 0.25);
             encoderDrive("front", minPower, 0.25);
             recognizeTarget("Stone Target");
+            playSound("ss_roger_roger");
             // 1st skystone
             encoderDriveDist("right", minPower, travelX);
             grabSkystone(minPower);
-            playSound("ss_roger_roger");
             depotToBuildingSite("blue", minPower, minTurnPower, 3);
             encoderDriveDist("left", minPower, (travelX + firstPlacement));
             buildSkystone("blue", minPower, 1);
@@ -56,16 +56,18 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
             buildingSiteToDepot("blue", minPower, minTurnPower, 4);
             encoderDriveDist("right", minPower, (travelX + firstPlacement));
             grabSkystone(minPower);
-            playSound("ss_roger_roger");
             depotToBuildingSite("blue", minPower, minTurnPower, 4);
             encoderDriveDist("left", minPower, (travelX + secondPlacement));
             buildSkystone("blue", minPower, 1);
             // Foundation
             encoderDriveDist("left", minPower, (centerPlacement - secondPlacement));
             grabFoundation("blue");
+            encoderDrive("right", minPower, 0.5);
+            armExtend();
             // Parking
-            encoderDrive("left", minPower, 0.75);
+            encoderDrive("left", minPower, 1);
             encoderDrive("front", minPower, 1.625);
+            encoderDrive("left", minPower, 0.25);
         }
         stopAllMotors();
         visionTargets.deactivate();

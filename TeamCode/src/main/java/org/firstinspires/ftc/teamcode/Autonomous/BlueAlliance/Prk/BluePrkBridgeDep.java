@@ -44,8 +44,8 @@ public class BluePrkBridgeDep extends MainAutonomous {
             encoderDrive("front", minPower, 1);
             gyroTurn(90, minTurnPower);
             armExtend();
-            gripRelease(300);
             encoderDrive("back", minPower, 1.625);
+            encoderDrive("left", minPower, 0.25);
         }
         stopAllMotors();
         visionTargets.deactivate();

@@ -63,7 +63,10 @@ public class BlueSkyPrkWallDep extends MainAutonomous {
             encoderDriveDist("front", minPower, travelX);
             encoderDrive("back", minPower, 2);
             // Parking
-            encoderDrive("right", minPower, 0.625);
+            encoderDrive("right", minPower, 1);
+            encoderDrive("front", minPower, 1);
+            armExtend();
+            encoderDrive("back", minPower, 0.625);
         }
         stopAllMotors();
         visionTargets.deactivate();
