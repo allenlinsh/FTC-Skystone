@@ -544,6 +544,8 @@ public class MainAutonomous extends LinearOpMode {
         int diagonalDistance    = (int)(dist * Math.sqrt(2) / inPerRev);
         int maxRuntime          = (int)(timePerBlock * dist / 24);
 
+        resetAngle();
+
         leftBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFrontMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -566,17 +568,9 @@ public class MainAutonomous extends LinearOpMode {
         runtime.reset();
         runtime.startTime();
         run(power, power, power, power);
-        while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy() && runtime.milliseconds() < maxRuntime) {
-            telemetry.addData("axialdist",axialDistance);
-            telemetry.addData("lateraldist",lateralDistance);
-            telemetry.addData("diagonalDist",diagonalDistance);
-            telemetry.addData("backleft", leftBackMotor.getCurrentPosition());
-            telemetry.addData("backright", rightBackMotor.getCurrentPosition());
-            telemetry.addData("frontleft", leftFrontMotor.getCurrentPosition());
-            telemetry.addData("frontright", rightFrontMotor.getCurrentPosition());
-            telemetry.update();
-        }
+        while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy() && runtime.milliseconds() < maxRuntime) {}
         stopMotor();
+        gyroCorrection();
     }
     public void testEncoderDrive(String direction, double power, double block) {
         double circumference    = Math.PI * 3.75;

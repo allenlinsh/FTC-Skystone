@@ -41,7 +41,6 @@ public class TestAutonomous extends MainAutonomous {
             //encoderDrive("front",minPower, 1);
             //gyroTurn(-90,minTurnPower);
             //encoderDrive("front",minPower, 0.5);
-
             //gyroCurve(-90,minTurnPower);
         }
         stopAllMotors();
