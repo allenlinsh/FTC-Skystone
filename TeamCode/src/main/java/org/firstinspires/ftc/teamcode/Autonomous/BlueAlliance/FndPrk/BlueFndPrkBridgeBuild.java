@@ -38,7 +38,9 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
          */
 
         if (opModeIsActive()) {
+            runtime.reset();
             runtime.startTime();
+            resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Foundation
             encoderDrive("front", minPower, 1);
@@ -46,7 +48,7 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
             grabFoundation("blue");
             armExtend();
             // Parking
-            encoderDrive("right", minPower, 0.25);
+            encoderDrive("right", minPower, 0.5);
             encoderDrive("left", minPower, 1);
             encoderDrive("front", minPower, 1.625);
             encoderDrive("left", minPower, 0.25);

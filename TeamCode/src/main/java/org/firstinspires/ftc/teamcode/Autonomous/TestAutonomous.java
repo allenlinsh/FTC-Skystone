@@ -24,28 +24,28 @@ public class TestAutonomous extends MainAutonomous {
         telemetry.update();
 
         if (opModeIsActive()) {
+            runtime.reset();
             runtime.startTime();
+            resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             playSound("ss_power_up");
 
-            timeDrive("front",minPower,motorTimePerBlock);
-            timeDrive("back",minPower,motorTimePerBlock);
-
+            timeDrive("front",minPower,1);
+            timeDrive("back",minPower,1);
             encoderDrive("front",minPower, 1);
             encoderDrive("back",minPower, 1);
+            encoderDriveSmooth("front", 1);
+            encoderDriveSmooth("back", 1);
 
-            timeTurn("clockwise", minTurnPower, motorTimePer90Deg);
-            timeTurn("counter-clockwise", minTurnPower, motorTimePer90Deg);
+            timeTurn(90, minTurnPower);
+            timeTurn(-90, minTurnPower);
 
             gyroTurn(90,minTurnPower);
             gyroTurn(-90,minTurnPower);
 
             gyroCurve(90,minTurnPower);
-            gyroTurn(180,minTurnPower);
-            gyroCurve(90,minTurnPower)
-            ;
-            gyroCurve(-90,minTurnPower);
-            gyroTurn(180,minTurnPower);
+            gyroTurn(90,minTurnPower);
+            gyroTurn(90,minTurnPower);
             gyroCurve(-90,minTurnPower);
 
             hookOn();
@@ -60,10 +60,14 @@ public class TestAutonomous extends MainAutonomous {
             gripRelease(150);
             armDrop(500);
             gripHold(150);
+            stopAllMotors();
             armCollapse();
-
+            /*
             recognizeTarget("Stone Target");
             recognizeSkystone("blue");
+             */
+            //grabFoundation("blue");
+            while (opModeIsActive() && runtime.milliseconds() < 30000) {}
         }
         stopAllMotors();
         visionTargets.deactivate();

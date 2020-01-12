@@ -48,7 +48,7 @@ public class MainTeleOp extends LinearOpMode {
     private double lateralFactor = 1.40;
     private double armPower, gripPower;
     private double leftBackPower, rightBackPower, leftFrontPower, rightFrontPower;
-    private int servoTimePer60Deg = 140;
+    private int servoTimePer90Deg = 850;
 
     @Override
     public void runOpMode() {
@@ -90,24 +90,22 @@ public class MainTeleOp extends LinearOpMode {
 
             if (noStart && gamepad2.x) {
                 // Left skystone grabber
-                if (leftSkystoneServo.getPosition() < 0.98) {
+                if (leftSkystoneServo.getPosition() != 0.98) {
                     // Grabber on
                     leftSkystoneServo.setPosition(0.98);
-                } else if (leftSkystoneServo.getPosition() > 0.52) {
+                } else if (leftSkystoneServo.getPosition() != 0.52) {
                     // Grabber off
                     leftSkystoneServo.setPosition(0.52);
                 }
-                pause("servo");
             } else if (noStart && gamepad2.b) {
                 // Right skystone grabber
-                if (rightSkystoneServo.getPosition() > 0.52) {
+                if (rightSkystoneServo.getPosition() != 0.52) {
                     // Grabber on
                     rightSkystoneServo.setPosition(0.52);
-                } else if (rightSkystoneServo.getPosition() < 0.98) {
+                } else if (rightSkystoneServo.getPosition() != 0.98) {
                     // Grabber off
                     rightSkystoneServo.setPosition(0.98);
                 }
-                pause("servo");
             }
 
             //
@@ -138,8 +136,13 @@ public class MainTeleOp extends LinearOpMode {
                 // set yaw movement to logarithmic values and set a dead zone
                 driveYaw = (Math.abs(gamepad1.right_stick_x) < Math.sqrt(0.1))
                         ? 0
-                        : Math.signum(gamepad1.right_stick_x) * Math.pow((gamepad1.right_stick_x * maxPower), 2);
+                        : Math.signum(gamepad1.right_stick_x) * Math.pow((gamepad1.right_stick_x * 1.0), 2);
             }
+            leftBackPower = round((-driveLateral - driveAxial + driveYaw), 2);
+            rightBackPower = round((driveLateral - driveAxial - driveYaw), 2);
+            leftFrontPower = round((driveLateral - driveAxial + driveYaw), 2);
+            rightFrontPower = round((-driveLateral - driveAxial - driveYaw), 2);
+
             // Arm stops if top or bottom limit is on
             armPower = ((gamepad2.left_stick_y > 0 && topPressed()) || (gamepad2.left_stick_y < 0 && bottomPressed()))
                     ? 0
@@ -152,18 +155,27 @@ public class MainTeleOp extends LinearOpMode {
                 // Grip release
                 gripPower = -gamepad2.left_trigger * maxGripPower;
             }
-
-            leftBackPower = round((-driveLateral - driveAxial + driveYaw), 2);
-            rightBackPower = round((driveLateral - driveAxial - driveYaw), 2);
-            leftFrontPower = round((driveLateral - driveAxial + driveYaw), 2);
-            rightFrontPower = round((-driveLateral - driveAxial - driveYaw), 2);
-
-            if (!gamepad1.atRest()) {
+            //
+            // ================================= POWER CONTROL =====================================
+            //
+            if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0
+                    || gamepad1.right_stick_x != 0 || gamepad1.dpad_up
+                    || gamepad1.dpad_down || gamepad1.dpad_left
+                    || gamepad1.dpad_right || gamepad1.x
+                    || gamepad1.b || gamepad1.right_bumper
+                    || gamepad1.left_bumper) {
                 run(leftBackPower, rightBackPower, leftFrontPower, rightFrontPower);
+            } else {
+                stopMotor();
+            }
+            if (gamepad2.left_stick_y != 0 || gamepad2.right_trigger != 0
+                    || gamepad2.left_trigger != 0 || gamepad2.x
+                    || gamepad2.b) {
                 armMotor.setPower(armPower);
                 gripMotor.setPower(gripPower);
             } else {
-                stopAllMotors();
+                armMotor.setPower(0);
+                gripMotor.setPower(0);
             }
 
             print("Left Back Power", leftBackPower);
@@ -320,7 +332,7 @@ public class MainTeleOp extends LinearOpMode {
         runtime.startTime();
         switch (mode) {
             case "servo":
-                duration = (int)(180 * servoTimePer60Deg / 60);
+                duration = (int)(servoTimePer90Deg);
                 break;
             case "motor":
                 duration = 250;

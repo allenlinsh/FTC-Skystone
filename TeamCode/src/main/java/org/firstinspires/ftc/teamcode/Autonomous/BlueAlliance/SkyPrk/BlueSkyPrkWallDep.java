@@ -38,12 +38,14 @@ public class BlueSkyPrkWallDep extends MainAutonomous {
          */
 
         if (opModeIsActive()) {
+            runtime.reset();
             runtime.startTime();
+            resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Recognize skystone
             playSound("ss_power_up");
             encoderDrive("left", minPower, 0.25);
-            encoderDrive("front", minPower, 0.25);
+            encoderDrive("front", minPower, 0.5);
             recognizeTarget("Stone Target");
             // 1st skystone
             encoderDrive("front", minPower, 0.75);

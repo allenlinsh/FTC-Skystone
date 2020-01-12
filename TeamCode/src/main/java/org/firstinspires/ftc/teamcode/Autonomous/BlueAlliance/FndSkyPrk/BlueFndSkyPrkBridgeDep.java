@@ -38,27 +38,35 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
          */
 
         if (opModeIsActive()) {
+            runtime.reset();
             runtime.startTime();
+            resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Recognize skystone
             playSound("ss_power_up");
             encoderDrive("left", minPower, 0.25);
-            encoderDrive("front", minPower, 0.25);
+            encoderDrive("front", minPower, 0.5);
             recognizeTarget("Stone Target");
             playSound("ss_roger_roger");
             // 1st skystone
             encoderDriveDist("right", minPower, travelX);
             grabSkystone(minPower);
             depotToBuildingSite("blue", minPower, minTurnPower, 3);
+            //
+            gyroCorrection();
+            //
             encoderDriveDist("left", minPower, (travelX + firstPlacement));
-            buildSkystone("blue", minPower, 1);
+            buildSkystone(minPower, 1);
             // 2nd skystone
-            buildingSiteToDepot("blue", minPower, minTurnPower, 4);
             encoderDriveDist("right", minPower, (travelX + firstPlacement));
+            //
+            gyroCorrection();
+            //
+            buildingSiteToDepot("blue", minPower, minTurnPower, 4);
             grabSkystone(minPower);
             depotToBuildingSite("blue", minPower, minTurnPower, 4);
             encoderDriveDist("left", minPower, (travelX + secondPlacement));
-            buildSkystone("blue", minPower, 1);
+            buildSkystone(minPower, 1);
             // Foundation
             encoderDriveDist("left", minPower, (centerPlacement - secondPlacement));
             grabFoundation("blue");

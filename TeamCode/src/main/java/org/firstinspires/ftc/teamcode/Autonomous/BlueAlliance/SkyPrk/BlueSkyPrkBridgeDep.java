@@ -38,12 +38,14 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
          */
 
         if (opModeIsActive()) {
+            runtime.reset();
             runtime.startTime();
+            resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Recognize skystone
             playSound("ss_power_up");
             encoderDrive("left", minPower, 0.25);
-            encoderDrive("front", minPower, 0.25);
+            encoderDrive("front", minPower, 0.5);
             recognizeTarget("Stone Target");
             playSound("ss_roger_roger");
             // 1st skystone
