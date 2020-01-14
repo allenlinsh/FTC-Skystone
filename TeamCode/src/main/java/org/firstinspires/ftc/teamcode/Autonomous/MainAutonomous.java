@@ -37,6 +37,7 @@ import android.preference.PreferenceManager;
 // -Template: https://github.com/FestiveInvader/ftc_app/blob/master/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/Auton/DeclarationsAutonomous.java
 // -Vuforia: https://github.com/ftctechnh/ftc_app/blob/master/FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/external/samples/ConceptVuforiaNavigationWebcam.java
 // -Gyro Correction: https://stemrobotics.cs.pdx.edu/node/7265
+// -PID Control: https://stemrobotics.cs.pdx.edu/node/7268
 //
 
 @Autonomous
@@ -195,7 +196,7 @@ public class MainAutonomous extends LinearOpMode {
         if (!autoName.toString().equals(className) && !gamepad1.start && !gamepad2.start) {
             requestOpModeStop();
         } else {
-            AppUtil.getInstance().showToast(UILocation.BOTH, "Selected Autonomous mode - \'" + className + "\'", 7500);
+            AppUtil.getInstance().showToast(UILocation.BOTH, "\'" + className + "\' selected.", 7500);
         }
     }
     public void getHardwareMap() {
@@ -726,7 +727,6 @@ public class MainAutonomous extends LinearOpMode {
         double fixAngle = Math.abs(angle) * 0.13888;
         //double fixAngle = 0;
 
-
         resetAngle();
         mode("no encoder");
 
@@ -740,8 +740,6 @@ public class MainAutonomous extends LinearOpMode {
             return;
         }
 
-        runtime.reset();
-        runtime.startTime();
         run(leftPower, rightPower, leftPower, rightPower);
 
         if (angle < 0) {
