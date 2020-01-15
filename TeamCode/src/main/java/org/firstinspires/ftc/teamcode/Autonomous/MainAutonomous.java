@@ -123,9 +123,10 @@ public class MainAutonomous extends LinearOpMode {
     public float robotWidth                     = 18.00f;
     public float robotLength                    = 18.00f;
     public float robotHeight                    = 14.00f;
+    public float frontTranslation               = 112.0f / mmPerInch;
     // Distance to travel from front of robot to center of target
     public float travelX                        = 2.0f * fullSkystoneDist + halfSkystoneDist - (robotWidth / 2.0f);
-    public float travelY                        = inPerBlock;
+    public float travelY                        = inPerBlock - frontTranslation;
     // Location of center of skystone placement with relation to wall
     public float firstSkystone                  = 13.25f;
     public float secondSkystone                 = 29.25f;
@@ -452,7 +453,7 @@ public class MainAutonomous extends LinearOpMode {
 
                 // Update travelling distance
                 if (robotX != 0) travelX = robotX;
-                if (robotY != 0) travelY = -robotY - (robotLength / 2);
+                if (robotY != 0) travelY = -robotY - (robotLength / 2) - frontTranslation;
 
                 if (skystoneFound) {
                     if (robotX < -0.4) {
@@ -555,6 +556,13 @@ public class MainAutonomous extends LinearOpMode {
     }
     private boolean checkGyro() {
         if (Math.abs(getAngle()) < 1) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    private boolean checkGyro(int angle) {
+        if (Math.abs(angle)-Math.abs(getAngle()) < 1) {
             return false;
         } else {
             return true;
@@ -751,6 +759,25 @@ public class MainAutonomous extends LinearOpMode {
         stopMotor();
         resetAngle();
     }
+    public void testTurn(int angle) {
+        double leftPower = 0;
+        double rightPower = 0;
+        resetAngle();
+        mode("no encoder");
+
+        while(opModeIsActive() && checkGyro(angle)) {
+            if (angle > getAngle()) {
+                leftPower = minTurnPower;
+                rightPower = -minTurnPower;
+            } else if (angle < getAngle()) {
+                leftPower = -minTurnPower;
+                rightPower = minTurnPower;
+            }
+            run(leftPower, rightPower, leftPower, rightPower);
+        }
+        resetAngle();
+        stopMotor();
+    }
     public void gyroCurve(int angle, double power) {
         if (power < minTurnPower) {
             power = minTurnPower;
@@ -877,10 +904,9 @@ public class MainAutonomous extends LinearOpMode {
     public void grabFoundation(String alliance) {
         gyroTurn(90, minTurnPower);
         gyroTurn(90, minTurnPower);
-        encoderDrive("back", minPower, 0.35);
+        encoderDrive("back", minPower, 0.5);
         hookOn();
-        encoderDrive("front", minPower, 0.35);
-        encoderDrive("front", minPower, 0.5);
+        encoderDrive("front", minPower, 1);
         switch (alliance) {
             case "blue": gyroTurn(-90, maxTurnPower); break;
             case "red": gyroTurn(90, maxTurnPower); break;
@@ -929,17 +955,17 @@ public class MainAutonomous extends LinearOpMode {
         armDrop(150);
         gripHold(500);
         armRaise(500);
-        encoderDrive("back", power, 0.25);
+        encoderDriveDist("back", power, travelY-0.5*inPerBlock);
     }
     public void buildSkystone(double power, int height) {
         int duration = 500 * (height - 1);
         int doubleDuration = duration * 2;
         armRaise(doubleDuration);
-        encoderDrive("front", power, 0.25);
+        encoderDriveDist("front", power, travelY-0.5*inPerBlock);
         armDrop(duration);
         gripRelease(500);
         armRaise(150);
-        encoderDrive("back", power, 0.5);
+        encoderDriveDist("back", power, travelY-0.5*inPerBlock);
         armExtend();
     }
     public void captureLeftSkystone() {

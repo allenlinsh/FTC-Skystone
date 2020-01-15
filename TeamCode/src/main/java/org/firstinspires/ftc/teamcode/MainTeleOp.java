@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -28,9 +29,10 @@ public class MainTeleOp extends LinearOpMode {
     public ColorSensor leftColorSensor, rightColorSensor;
     public DigitalChannel topLimit, bottomLimit;
     public WebcamName LogitechC310;
+    public RevBlinkinLedDriver led;
 
     // Declare general variables
-    public ElapsedTime runtime;
+    public ElapsedTime runtime, gametime;
     private boolean noStart = true;
     private boolean resetArm = false;
 
@@ -53,6 +55,7 @@ public class MainTeleOp extends LinearOpMode {
     @Override
     public void runOpMode() {
         runtime = new ElapsedTime();
+        gametime = new ElapsedTime();
 
         // Initialize hardware
         getHardwareMap();
@@ -65,6 +68,8 @@ public class MainTeleOp extends LinearOpMode {
 
         print("Status", "Running");
         update();
+        gametime.reset();
+        gametime.startTime();
 
         while (opModeIsActive()) {
             noStart = !(gamepad1.start || gamepad2.start);
@@ -97,6 +102,7 @@ public class MainTeleOp extends LinearOpMode {
                     // Grabber off
                     leftSkystoneServo.setPosition(0.52);
                 }
+                pause("servo");
             } else if (noStart && gamepad2.b) {
                 // Right skystone grabber
                 if (rightSkystoneServo.getPosition() != 0.52) {
@@ -106,6 +112,7 @@ public class MainTeleOp extends LinearOpMode {
                     // Grabber off
                     rightSkystoneServo.setPosition(0.98);
                 }
+                pause("servo");
             }
 
             //
@@ -178,6 +185,11 @@ public class MainTeleOp extends LinearOpMode {
                 gripMotor.setPower(0);
             }
 
+            //
+            // ================================ FEEDBACK CONTROL ===================================
+            //
+
+
             print("Left Back Power", leftBackPower);
             print("Right Back Power", rightBackPower);
             print("Left Front Power", leftFrontPower);
@@ -198,7 +210,7 @@ public class MainTeleOp extends LinearOpMode {
     }
 
     // Init functions
-    public void getHardwareMap() {
+    public void getHardwareMap()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
         imu                 = hardwareMap.get(BNO055IMU.class, "imu");
         leftBackMotor       = hardwareMap.get(DcMotor.class, "leftBackMotor");
         rightBackMotor      = hardwareMap.get(DcMotor.class, "rightBackMotor");
@@ -215,6 +227,7 @@ public class MainTeleOp extends LinearOpMode {
         topLimit            = hardwareMap.get(DigitalChannel.class, "topLimit");
         bottomLimit         = hardwareMap.get(DigitalChannel.class, "bottomLimit");
         LogitechC310        = hardwareMap.get(WebcamName.class, "Logitech C310");
+        led                 = hardwareMap.get(RevBlinkinLedDriver.class, "led");
     }
     public void initMotor() {
         rightBackMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -241,6 +254,7 @@ public class MainTeleOp extends LinearOpMode {
         rightServo.setPosition(1);
         leftSkystoneServo.setPosition(0.52);
         rightSkystoneServo.setPosition(0.98);
+        led.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
     }
     public boolean checkServo() {
         if (round(leftServo.getPosition(), 2) == 0
@@ -332,7 +346,7 @@ public class MainTeleOp extends LinearOpMode {
         runtime.startTime();
         switch (mode) {
             case "servo":
-                duration = (int)(servoTimePer90Deg);
+                duration = (int)(servoTimePer90Deg * 0.5);
                 break;
             case "motor":
                 duration = 250;
