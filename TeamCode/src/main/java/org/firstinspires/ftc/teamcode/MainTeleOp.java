@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.view.Display;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -22,19 +26,20 @@ public class MainTeleOp extends LinearOpMode {
     // Declare hardware variables
     public BNO055IMU imu;
     public DcMotor leftBackMotor, rightBackMotor, leftFrontMotor, rightFrontMotor;
-    public DcMotor armMotor;
-    public DcMotor gripMotor;
+    public DcMotor armMotor, gripMotor;
     public Servo leftServo, rightServo;
-    public Servo leftSkystoneServo, rightSkystoneServo;
-    public ColorSensor leftColorSensor, rightColorSensor;
+    //public Servo leftSkystoneServo, rightSkystoneServo;
+    //public ColorSensor leftColorSensor, rightColorSensor;
     public DigitalChannel topLimit, bottomLimit;
     public WebcamName LogitechC310;
     public RevBlinkinLedDriver led;
 
     // Declare general variables
     public ElapsedTime runtime, gametime;
+    public boolean initReady = false;
     private boolean noStart = true;
-    private boolean resetArm = false;
+    public RevBlinkinLedDriver.BlinkinPattern pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
+    public RevBlinkinLedDriver.BlinkinPattern blinkPattern = RevBlinkinLedDriver.BlinkinPattern.VIOLET;
 
     // Declare movement variables
     private static final int ticksPerRev = 480;
@@ -52,6 +57,10 @@ public class MainTeleOp extends LinearOpMode {
     private double leftBackPower, rightBackPower, leftFrontPower, rightFrontPower;
     private int servoTimePer90Deg = 850;
 
+    // Declare shared preference variables
+    public SharedPreferences preferences;
+    public String teamColor;
+
     @Override
     public void runOpMode() {
         runtime = new ElapsedTime();
@@ -59,15 +68,15 @@ public class MainTeleOp extends LinearOpMode {
 
         // Initialize hardware
         getHardwareMap();
+        getPreferences();
         initCheck();
 
-        print("Status", "Initialized");
-        update();
+        if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
+        if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
+        led.setPattern(pattern);
 
         waitForStart();
 
-        print("Status", "Running");
-        update();
         gametime.reset();
         gametime.startTime();
 
@@ -79,6 +88,9 @@ public class MainTeleOp extends LinearOpMode {
             driveYaw        = 0;
             armPower        = 0;
             gripPower       = 0;
+
+            blinkLED(5000, 5);
+            blinkLED(10000, 3);
 
             //
             // ================================= SERVO CONTROL =====================================
@@ -93,6 +105,7 @@ public class MainTeleOp extends LinearOpMode {
                 rightServo.setPosition(1);
             }
 
+            /*
             if (noStart && gamepad2.x) {
                 // Left skystone grabber
                 if (leftSkystoneServo.getPosition() != 0.98) {
@@ -114,6 +127,7 @@ public class MainTeleOp extends LinearOpMode {
                 }
                 pause("servo");
             }
+            */
 
             //
             // ================================= MOTOR CONTROL =====================================
@@ -189,7 +203,11 @@ public class MainTeleOp extends LinearOpMode {
             // ================================ FEEDBACK CONTROL ===================================
             //
 
+            blinkLED(70000, 2);
+            blinkLED(90000, 3);
 
+            print("Status", "Running");
+            print("time", gametime);
             print("Left Back Power", leftBackPower);
             print("Right Back Power", rightBackPower);
             print("Left Front Power", leftFrontPower);
@@ -208,9 +226,26 @@ public class MainTeleOp extends LinearOpMode {
     public double round(double val, int roundTo) {
         return Double.valueOf(String.format("%." + roundTo + "f", val));
     }
+    public void blinkLED(int time, int numBlink) {
+        int increment = 100;
+        if (gametime.milliseconds() > time && gametime.milliseconds() < time+numBlink*2*increment) {
+            for(int i = 2; i <= numBlink*2; i+=2) {
+                if (gametime.milliseconds() > time+(i-2)*increment && gametime.milliseconds() < time+(i-1)*increment) {
+                    led.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+                }
+                if (gametime.milliseconds() > time+(i-1)*increment && gametime.milliseconds() < time+i*increment) {
+                    led.setPattern(pattern);
+                }
+            }
+        }
+    }
 
     // Init functions
-    public void getHardwareMap()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
+    public void getPreferences() {
+        preferences = PreferenceManager.getDefaultSharedPreferences(hardwareMap.appContext);
+        teamColor = String.valueOf(preferences.getString("auto_team_color", "blue"));
+    }
+    public void getHardwareMap() {
         imu                 = hardwareMap.get(BNO055IMU.class, "imu");
         leftBackMotor       = hardwareMap.get(DcMotor.class, "leftBackMotor");
         rightBackMotor      = hardwareMap.get(DcMotor.class, "rightBackMotor");
@@ -220,105 +255,106 @@ public class MainTeleOp extends LinearOpMode {
         gripMotor           = hardwareMap.get(DcMotor.class, "gripMotor");
         leftServo           = hardwareMap.get(Servo.class, "leftServo");
         rightServo          = hardwareMap.get(Servo.class, "rightServo");
-        leftSkystoneServo   = hardwareMap.get(Servo.class, "leftSkystoneServo");
-        rightSkystoneServo  = hardwareMap.get(Servo.class, "rightSkystoneServo");
-        leftColorSensor     = hardwareMap.get(ColorSensor.class, "leftColorSensor");
-        rightColorSensor    = hardwareMap.get(ColorSensor.class, "rightColorSensor");
+        //leftSkystoneServo   = hardwareMap.get(Servo.class, "leftSkystoneServo");
+        //rightSkystoneServo  = hardwareMap.get(Servo.class, "rightSkystoneServo");
+        //leftColorSensor     = hardwareMap.get(ColorSensor.class, "leftColorSensor");
+        //rightColorSensor    = hardwareMap.get(ColorSensor.class, "rightColorSensor");
         topLimit            = hardwareMap.get(DigitalChannel.class, "topLimit");
         bottomLimit         = hardwareMap.get(DigitalChannel.class, "bottomLimit");
         LogitechC310        = hardwareMap.get(WebcamName.class, "Logitech C310");
         led                 = hardwareMap.get(RevBlinkinLedDriver.class, "led");
     }
-    public void initMotor() {
+    private void initMotor() {
+        leftBackMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightBackMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         gripMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftBackMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftFrontMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFrontMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        gripMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFrontMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        gripMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
-    public boolean checkMotor() {
-        if (gripMotor.getZeroPowerBehavior() == DcMotor.ZeroPowerBehavior.BRAKE) return true;
-        else return false;
+    private boolean checkMotor() {
+        if (gripMotor.getZeroPowerBehavior() == DcMotor.ZeroPowerBehavior.BRAKE) {
+            return true;
+        } else {
+            return false;
+        }
     }
-    public void initServo() {
+    private void initServo() {
         leftServo.setPosition(0);
         rightServo.setPosition(1);
-        leftSkystoneServo.setPosition(0.52);
-        rightSkystoneServo.setPosition(0.98);
-        led.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+        //leftSkystoneServo.setPosition(0.52);
+        //rightSkystoneServo.setPosition(0.98);
     }
-    public boolean checkServo() {
-        if (round(leftServo.getPosition(), 2) == 0
-                && round(rightServo.getPosition(), 2) == 1
-                && round(leftSkystoneServo.getPosition(), 2) == 0.52
-                && round(rightSkystoneServo.getPosition(), 2) == 0.98) {
+    private boolean checkServo() {
+        /*
+        if (round(leftServo.getPosition(), 2) == 0 &&
+                round(rightServo.getPosition(), 2) == 1 &&
+                round(leftSkystoneServo.getPosition(), 2) == 0.52 &&
+                round(rightSkystoneServo.getPosition(), 2) == 0.98) {
             return true;
         }
-        else return false;
+        */
+        if (round(leftServo.getPosition(), 2) == 0 &&
+                round(rightServo.getPosition(), 2) == 1) {
+            return true;
+        } else {
+            return false;
+        }
     }
-    public void initIMU() {
+    private void initIMU() {
         BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
         imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         imuParameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         imuParameters.loggingEnabled = false;
         imu.initialize(imuParameters);
+        while(!imu.isGyroCalibrated()){}
     }
-    public boolean checkIMU() {
-        if (imu.isGyroCalibrated()) return true;
-        else return false;
+    private boolean checkIMU() {
+        if (imu.isGyroCalibrated()) {
+            return true;
+        } else {
+            return false;
+        }
     }
     public void initCheck() {
-        while (!isStopRequested() && !(checkMotor() && checkServo() && checkIMU())) {
+        while (!isStopRequested() && !initReady) {
             // Initialize motor
-            if(!checkMotor()) {
+            if (!checkMotor()) {
                 print("Motor","Initializing");
-                telemetry.update();
+                update();
                 initMotor();
-            }
-            else if(checkMotor()) {
+            } else if (checkMotor()) {
                 print("Motor","Initialized");
-                telemetry.update();
+                update();
                 // Initialize servo
-                if(!checkServo()) {
+                if (!checkServo()) {
                     print("Motor","Initialized");
                     print("Servo","Initializing");
-                    telemetry.update();
+                    update();
                     initServo();
-                    while (!isStopRequested() && !checkServo()) {
-                        idle();
-                        sleep(50);
-                    }
-                }
-                else if(checkServo()) {
+                } else if (checkServo()) {
                     print("Motor","Initialized");
                     print("Servo","Initialized");
-                    telemetry.update();
+                    update();
                     // Initialize imu
-                    if(!checkIMU()) {
+                    if (!checkIMU()) {
                         print("Motor","Initialized");
                         print("Servo","Initialized");
                         print("IMU","Initializing...");
-                        telemetry.update();
+                        update();
                         initIMU();
-                        while (!isStopRequested() && !checkIMU()) {
-                            idle();
-                            sleep(50);
-                        }
-                    }
-                    else if(checkIMU()) {
+                    } else if (checkIMU()) {
                         print("Motor","Initialized");
                         print("Servo","Initialized");
                         print("IMU","Initialized");
-                        telemetry.update();
+                        update();
+                        initReady = true;
                     }
                 }
             }

@@ -48,8 +48,9 @@ public class MainAutonomous extends LinearOpMode {
     // Declare hardware variables
     public BNO055IMU imu;
     public DcMotor leftBackMotor, rightBackMotor, leftFrontMotor, rightFrontMotor, armMotor, gripMotor;
-    public Servo leftServo, rightServo, leftSkystoneServo, rightSkystoneServo;
-    public ColorSensor leftColorSensor, rightColorSensor;
+    public Servo leftServo, rightServo;
+    //public Servo leftSkystoneServo, rightSkystoneServo;
+    //public ColorSensor leftColorSensor, rightColorSensor;
     public DigitalChannel topLimit, bottomLimit;
     public WebcamName LogitechC310;
 
@@ -59,22 +60,23 @@ public class MainAutonomous extends LinearOpMode {
     public static float inPerBlock = 23.625f;
     public static float fullSkystoneDist = 8.0f;
     public static float halfSkystoneDist = 4.0f;
-    public double leftColorThreshold, rightColorThreshold;
+    //public double leftColorThreshold, rightColorThreshold;
 
     // Declare movement variables
     public static final int ticksPerRev = 480;
     public Orientation lastAngles = new Orientation();
     public double globalAngle;
     public double correction;
-    public double minPower = 0.25;
+    public double minPower = 0.35;
     public double maxPower = round((100.0/127.0), 2);
-    public double minTurnPower = 0.35;
-    public double maxTurnPower = round((90.0/127.0), 2);
+    public double minTurnPower = 0.25;
+    public double maxTurnPower = round((70.0/127.0), 2);
     public int motorTimePerBlock = 1350;
     public int motorTimePer90Deg = 1025;
     public int servoTimePer90Deg = 850;
     public int currentDistance = 0;
     public double currentPower = minPower;
+    public int currentAngle = 0;
 
     // Declare vuforia variables
     public VuforiaLocalizer vuforia;
@@ -210,10 +212,10 @@ public class MainAutonomous extends LinearOpMode {
         gripMotor           = hardwareMap.get(DcMotor.class, "gripMotor");
         leftServo           = hardwareMap.get(Servo.class, "leftServo");
         rightServo          = hardwareMap.get(Servo.class, "rightServo");
-        leftSkystoneServo   = hardwareMap.get(Servo.class, "leftSkystoneServo");
-        rightSkystoneServo  = hardwareMap.get(Servo.class, "rightSkystoneServo");
-        leftColorSensor     = hardwareMap.get(ColorSensor.class, "leftColorSensor");
-        rightColorSensor    = hardwareMap.get(ColorSensor.class, "rightColorSensor");
+        //leftSkystoneServo   = hardwareMap.get(Servo.class, "leftSkystoneServo");
+        //rightSkystoneServo  = hardwareMap.get(Servo.class, "rightSkystoneServo");
+        //leftColorSensor     = hardwareMap.get(ColorSensor.class, "leftColorSensor");
+        //rightColorSensor    = hardwareMap.get(ColorSensor.class, "rightColorSensor");
         topLimit            = hardwareMap.get(DigitalChannel.class, "topLimit");
         bottomLimit         = hardwareMap.get(DigitalChannel.class, "bottomLimit");
         LogitechC310        = hardwareMap.get(WebcamName.class, "Logitech C310");
@@ -243,14 +245,20 @@ public class MainAutonomous extends LinearOpMode {
     private void initServo() {
         leftServo.setPosition(0);
         rightServo.setPosition(1);
-        leftSkystoneServo.setPosition(0.52);
-        rightSkystoneServo.setPosition(0.98);
+        //leftSkystoneServo.setPosition(0.52);
+        //rightSkystoneServo.setPosition(0.98);
     }
     private boolean checkServo() {
+        /*
         if (round(leftServo.getPosition(), 2) == 0 &&
                 round(rightServo.getPosition(), 2) == 1 &&
                 round(leftSkystoneServo.getPosition(), 2) == 0.52 &&
                 round(rightSkystoneServo.getPosition(), 2) == 0.98) {
+            return true;
+        }
+        */
+        if (round(leftServo.getPosition(), 2) == 0 &&
+                round(rightServo.getPosition(), 2) == 1) {
             return true;
         } else {
             return false;
@@ -356,7 +364,7 @@ public class MainAutonomous extends LinearOpMode {
         }
     }
     public void initCheck() {
-        while (!isStopRequested() && !(checkMotor() && checkServo() && checkIMU() && checkVuforia())) {
+        while (!isStopRequested() && !initReady) {
             // Initialize motor
             if (!checkMotor()) {
                 print("Motor","Initializing");
@@ -542,9 +550,16 @@ public class MainAutonomous extends LinearOpMode {
     public void gyroCorrection() {
         runtime.reset();
         runtime.startTime();
+        String sign = "pos";
         mode("no encoder");
 
-        while (opModeIsActive() && checkGyro()) {
+        if (getAngle() > 0) {
+            sign = "pos";
+        } else if (getAngle() < 0) {
+            sign = "neg";
+        }
+
+        while (opModeIsActive() && checkGyro(sign)) {
             if (getAngle() < 0) {
                 run(minPower, -minPower, minPower, -minPower);
             } else if (getAngle() > 0) {
@@ -554,18 +569,22 @@ public class MainAutonomous extends LinearOpMode {
         resetAngle();
         stopMotor();
     }
-    private boolean checkGyro() {
-        if (Math.abs(getAngle()) < 1) {
-            return false;
-        } else {
+    private boolean checkGyro(String sign) {
+        if ("pos".equals(sign) && getAngle() > 0) {
             return true;
+        } else if ("neg".equals(sign) && getAngle() < 0) {
+            return true;
+        }
+        else {
+            return false;
+
         }
     }
     private boolean checkGyro(int angle) {
-        if (Math.abs(angle)-Math.abs(getAngle()) < 1) {
-            return false;
-        } else {
+        if (Math.abs(getAngle()) < Math.abs(angle)) {
             return true;
+        } else {
+            return false;
         }
     }
     public void resetAngle() {
@@ -585,13 +604,13 @@ public class MainAutonomous extends LinearOpMode {
         lastAngles = angles;
         return -globalAngle;
     }
-    public double checkDirection() {
+    public double checkDirection(int targetAngle) {
         // The gain value determines how sensitive the correction is to direction changes.
         double correction;
         double angle = getAngle();
         double gain = 0.025;
 
-        correction = (angle == 0) ? 0 : -angle;
+        correction = (angle == targetAngle) ? 0 : -(targetAngle-angle);
         correction = correction * gain;
 
         return correction;
@@ -673,9 +692,9 @@ public class MainAutonomous extends LinearOpMode {
         int diagonalDistance    = (int)(dist * Math.sqrt(2) / inPerRev);
         */
 
-        int accelerateDistance      = (int)(axialDistance* 0.25);
+        int accelerateDistance      = (int)(axialDistance* 0.375);
         int decelerateDistance      = (int)(axialDistance * 0.5);
-        int bufferDistance          = (int)(axialDistance * 0.75);
+        int bufferDistance          = (int)(axialDistance * 0.625);
 
         mode("reset");
         if (direction == "front") set(axialDistance, axialDistance, axialDistance, axialDistance);
@@ -759,24 +778,62 @@ public class MainAutonomous extends LinearOpMode {
         stopMotor();
         resetAngle();
     }
-    public void testTurn(int angle) {
+    public void gyroTurnSmooth(int angle) {
         double leftPower = 0;
         double rightPower = 0;
+        double power = 0;
+
+        int accelerateAngle      = (int)(Math.abs(angle) * 0.375);
+        int decelerateAngle      = (int)(Math.abs(angle) * 0.5);
+        int bufferAngle          = (int)(Math.abs(angle) * 0.625);
+
         resetAngle();
         mode("no encoder");
 
         while(opModeIsActive() && checkGyro(angle)) {
+            currentAngle = (int)(Math.abs(getAngle()));
+            if (currentAngle < accelerateAngle) {
+                power = minTurnPower + ((float)currentAngle/(float)accelerateAngle) * (maxTurnPower - minTurnPower);
+            } else if (currentDistance > accelerateAngle && currentAngle < decelerateAngle) {
+                power = maxTurnPower;
+            } else if (currentDistance > decelerateAngle && currentDistance < bufferAngle){
+                power = maxTurnPower - ((float)(currentAngle-decelerateAngle)/(float)(bufferAngle-decelerateAngle)) * (maxTurnPower - minTurnPower);
+            } else if (currentAngle > bufferAngle) {
+                power = minTurnPower;
+            }
             if (angle > getAngle()) {
-                leftPower = minTurnPower;
-                rightPower = -minTurnPower;
+                leftPower = power;
+                rightPower = -power;
             } else if (angle < getAngle()) {
-                leftPower = -minTurnPower;
-                rightPower = minTurnPower;
+                leftPower = -power;
+                rightPower = power;
             }
             run(leftPower, rightPower, leftPower, rightPower);
         }
-        resetAngle();
         stopMotor();
+        resetAngle();
+    }
+    public void testTurn(int angle) {
+        runtime.reset();
+        runtime.startTime();
+        double power = 0;
+        while (opModeIsActive() && getAngle() != angle && runtime.milliseconds() < (Math.abs(angle)*motorTimePerBlock/90.0)) {
+            print("currAngle", getAngle());
+            print("targetAngle", angle);
+            print("correction", correction);
+            print("power", power);
+            update();
+            correction = checkDirection(angle);
+            if (Math.abs(correction) > 0.15) {
+                power = correction;
+            } else {
+                power = Math.signum(correction) * 0.15;
+            }
+            run(-power, power, -power, power);
+        }
+        power = 0;
+        stopMotor();
+        resetAngle();
     }
     public void gyroCurve(int angle, double power) {
         if (power < minTurnPower) {
@@ -914,39 +971,6 @@ public class MainAutonomous extends LinearOpMode {
         encoderDrive("back", minPower, 0.25);
         hookOff();
     }
-    public void recognizeSkystone(String alliance) {
-        switch (alliance) {
-            case "blue":
-                leftColorThreshold = leftColorSensor.red() * leftColorSensor.green() / Math.pow(leftColorSensor.blue(), 2);
-                if (leftColorThreshold <= 3) captureLeftSkystone();
-                break;
-            case "red":
-                rightColorThreshold = rightColorSensor.red() * rightColorSensor.green() / Math.pow(rightColorSensor.blue(), 2);
-                if (rightColorThreshold <= 3) captureRightSkystone();
-                break;
-        }
-    }
-    public void sideGrabSkystone(String alliance) {
-        if (alliance == "blue") {
-            switch (skystonePosition) {
-                case "left": travelX = 2 * fullSkystoneDist; break;
-                case "center": travelX = fullSkystoneDist; break;
-            }
-            encoderDriveDist("back", minPower, travelX);
-            encoderDrive("left", minPower, 0.25);
-            captureLeftSkystone();
-            encoderDrive("right", minPower, 0.25);
-        } else if (alliance == "red") {
-            switch (skystonePosition) {
-                case "right": travelX = 2 * fullSkystoneDist; break;
-                case "center": travelX = fullSkystoneDist; break;
-            }
-            encoderDriveDist("back", minPower, travelX);
-            encoderDrive("right", minPower, 0.25);
-            encoderDrive("left", minPower, 0.25);
-            captureRightSkystone();
-        }
-    }
     public void grabSkystone(double power) {
         armExtend();
         armRaise(150);
@@ -968,17 +992,60 @@ public class MainAutonomous extends LinearOpMode {
         encoderDriveDist("back", power, travelY-0.5*inPerBlock);
         armExtend();
     }
+    /*
+    public void recognizeSkystone(String alliance) {
+        switch (alliance) {
+            case "blue":
+                leftColorThreshold = leftColorSensor.red() * leftColorSensor.green() / Math.pow(leftColorSensor.blue(), 2);
+                if (leftColorThreshold <= 3) captureLeftSkystone();
+                break;
+            case "red":
+                rightColorThreshold = rightColorSensor.red() * rightColorSensor.green() / Math.pow(rightColorSensor.blue(), 2);
+                if (rightColorThreshold <= 3) captureRightSkystone();
+                break;
+        }
+    }
+    */
+    /*
+    public void sideGrabSkystone(String alliance) {
+        if (alliance == "blue") {
+            switch (skystonePosition) {
+                case "left": travelX = 2 * fullSkystoneDist; break;
+                case "center": travelX = fullSkystoneDist; break;
+            }
+            encoderDriveDist("back", minPower, travelX);
+            encoderDrive("left", minPower, 0.25);
+            captureLeftSkystone();
+            encoderDrive("right", minPower, 0.25);
+        } else if (alliance == "red") {
+            switch (skystonePosition) {
+                case "right": travelX = 2 * fullSkystoneDist; break;
+                case "center": travelX = fullSkystoneDist; break;
+            }
+            encoderDriveDist("back", minPower, travelX);
+            encoderDrive("right", minPower, 0.25);
+            encoderDrive("left", minPower, 0.25);
+            captureRightSkystone();
+        }
+    }
+    */
+    /*
     public void captureLeftSkystone() {
         leftSkystoneServo.setPosition(0.98);
         pause("servo");
     }
+    */
+    /*
     public void captureRightSkystone() {
         rightSkystoneServo.setPosition(0.52);
         pause("servo");
     }
+    */
+    /*
     public void collapseSkystone() {
         leftSkystoneServo.setPosition(0.52);
         rightSkystoneServo.setPosition(0.98);
         pause("servo");
     }
+    */
 }

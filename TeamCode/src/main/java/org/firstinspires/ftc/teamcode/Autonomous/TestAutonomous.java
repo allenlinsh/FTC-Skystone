@@ -29,7 +29,7 @@ public class TestAutonomous extends MainAutonomous {
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             playSound("ss_power_up");
-
+            /*
             timeDrive("front",minPower,1);
             timeDrive("back",minPower,1);
             encoderDrive("front",minPower, 1);
@@ -62,6 +62,9 @@ public class TestAutonomous extends MainAutonomous {
             gripHold(150);
             stopAllMotors();
             armCollapse();
+            */
+            testTurn(90);
+            testTurn(-90);
             /*
             recognizeTarget("Stone Target");
             recognizeSkystone("blue");
