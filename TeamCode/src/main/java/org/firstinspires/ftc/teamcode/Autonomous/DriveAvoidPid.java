@@ -31,7 +31,7 @@ public class DriveAvoidPid extends LinearOpMode
     DcMotor                 leftBackMotor, rightBackMotor, leftFrontMotor, rightFrontMotor;
     BNO055IMU               imu;
     Orientation             lastAngles = new Orientation();
-    double                  globalAngle, power = 0.25, correction, rotation;
+    double                  globalAngle, power = (100.0/127.0), correction, rotation;
     boolean                 aButton, bButton;
     PIDController           pidRotate, pidDrive;
 
@@ -69,7 +69,7 @@ public class DriveAvoidPid extends LinearOpMode
         // Set PID proportional value to start reducing power at about 50 degrees of rotation.
         // P by itself may stall before turn completed so we add a bit of I (integral) which
         // causes the PID controller to gently increase power if the turn is not completed.
-        pidRotate = new PIDController(.003, .00003, 0);
+        pidRotate = new PIDController(.003, .00006, 0);
 
         // Set PID proportional value to produce non-zero correction value when robot veers off
         // straight line. P value controls how sensitive the correction is.

@@ -40,6 +40,7 @@ public class MainTeleOp extends LinearOpMode {
     private boolean noStart = true;
     public RevBlinkinLedDriver.BlinkinPattern pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
     public RevBlinkinLedDriver.BlinkinPattern blinkPattern = RevBlinkinLedDriver.BlinkinPattern.VIOLET;
+    public boolean blinkDone = true;
 
     // Declare movement variables
     private static final int ticksPerRev = 480;
@@ -88,9 +89,6 @@ public class MainTeleOp extends LinearOpMode {
             driveYaw        = 0;
             armPower        = 0;
             gripPower       = 0;
-
-            blinkLED(5000, 5);
-            blinkLED(10000, 3);
 
             //
             // ================================= SERVO CONTROL =====================================
@@ -205,6 +203,9 @@ public class MainTeleOp extends LinearOpMode {
 
             blinkLED(70000, 2);
             blinkLED(90000, 3);
+            if (blinkDone) {
+                led.setPattern(pattern);
+            }
 
             print("Status", "Running");
             print("time", gametime);
@@ -228,15 +229,19 @@ public class MainTeleOp extends LinearOpMode {
     }
     public void blinkLED(int time, int numBlink) {
         int increment = 100;
-        if (gametime.milliseconds() > time && gametime.milliseconds() < time+numBlink*2*increment) {
-            for(int i = 2; i <= numBlink*2; i+=2) {
-                if (gametime.milliseconds() > time+(i-2)*increment && gametime.milliseconds() < time+(i-1)*increment) {
-                    led.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
-                }
-                if (gametime.milliseconds() > time+(i-1)*increment && gametime.milliseconds() < time+i*increment) {
-                    led.setPattern(pattern);
+        if (blinkDone && gametime.milliseconds() > time && gametime.milliseconds() < time+numBlink*2*increment) {
+            blinkDone = false;
+            if (!blinkDone) {
+                for(int i = 2; i <= numBlink*2; i+=2) {
+                    if (gametime.milliseconds() > time+(i-2)*increment && gametime.milliseconds() < time+(i-1)*increment) {
+                        led.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+                    }
+                    if (gametime.milliseconds() > time+(i-1)*increment && gametime.milliseconds() < time+i*increment) {
+                        led.setPattern(blinkPattern);
+                    }
                 }
             }
+            blinkDone = true;
         }
     }
 
