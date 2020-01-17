@@ -63,8 +63,13 @@ public class TestAutonomous extends MainAutonomous {
             stopAllMotors();
             armCollapse();
             */
-            testTurn(90);
-            testTurn(-90);
+            rotate(90, turnPower);
+            rotate(-90, turnPower);
+            sleep(2000);
+            drive("front", 1, drivePower);
+            drive("back", 1, drivePower);
+            drive("left", 1, drivePower);
+            drive("right", 1, drivePower);
             /*
             recognizeTarget("Stone Target");
             recognizeSkystone("blue");
