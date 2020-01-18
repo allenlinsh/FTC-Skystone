@@ -44,31 +44,30 @@ public class BlueSkyPrkWallDep extends MainAutonomous {
             while (runtime.milliseconds() < delayTime) {}
             // Recognize skystone
             playSound("ss_power_up");
-            encoderDrive("left", minPower, 0.25);
-            encoderDrive("front", minPower, 0.5);
+            encoderDriveSmooth("left", 0.25);
+            encoderDriveSmooth("front", 0.5);
             recognizeTarget("Stone Target");
+            playSound("ss_roger_roger");
             // 1st skystone
-            encoderDrive("front", minPower, 0.75);
-            gyroTurn(90, minTurnPower);
-            encoderDrive("front", minPower, 1.25);
-            sideGrabSkystone("blue");
-            playSound("ss_roger_roger");
-            encoderDrive("right", minPower, 1);
-            encoderDriveDist("front", minPower, travelX);
-            encoderDrive("back", minPower, 3);
+            encoderDriveSmoothDist("right", travelX);
+            grabSkystone();
+            rotate(-90, turnPower);
+            encoderDriveSmooth("front", 2);
+            dropSkystone();
             // 2nd skystone
-            encoderDrive("front", minPower, 2);
-            encoderDrive("left", minPower, 1);
-            sideGrabSkystone("blue");
-            playSound("ss_roger_roger");
-            encoderDrive("right", minPower, 1);
-            encoderDriveDist("front", minPower, travelX);
-            encoderDrive("back", minPower, 2);
-            // Parking
-            encoderDrive("right", minPower, 1);
-            encoderDrive("front", minPower, 1);
+            encoderDriveSmooth("back", 3);
             armExtend();
-            encoderDrive("back", minPower, 0.625);
+            rotate(90, turnPower);
+            encoderDriveSmoothDist("right", travelX);
+            grabSkystone();
+            rotate(-90, turnPower);
+            encoderDriveSmooth("front", 3);
+            dropSkystone();
+            // Parking
+            timeDrive("left", minPower, 2000);
+            encoderDriveSmooth("back", 0.625);
+            armExtend();
+            timeDrive("right", minPower, 500);
         }
         stopAllMotors();
         visionTargets.deactivate();

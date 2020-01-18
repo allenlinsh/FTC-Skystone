@@ -43,13 +43,13 @@ public class BlueFndPrkWallBuild extends MainAutonomous {
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Foundation
-            encoderDrive("front", minPower, 1);
-            encoderDriveDist("left", minPower, centerPlacement);
+            encoderDriveSmooth("front", 1);
+            encoderDriveSmoothDist("left", centerPlacement);
             grabFoundation("blue");
             armExtend();
             // Parking
-            encoderDrive("right", minPower, 1);
-            encoderDrive("front", minPower, 1.625);
+            timeDrive("right", minPower, 1000);
+            encoderDriveSmooth("front", 1.625);
         }
         stopAllMotors();
         visionTargets.deactivate();

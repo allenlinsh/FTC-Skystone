@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.view.Display;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
@@ -10,8 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -21,7 +20,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @TeleOp
-public class MainTeleOp extends LinearOpMode {
+public class MainTeleOpCorrection extends LinearOpMode {
     // Declare hardware variables
     public BNO055IMU imu;
     public DcMotor leftBackMotor, rightBackMotor, leftFrontMotor, rightFrontMotor;
@@ -54,6 +53,7 @@ public class MainTeleOp extends LinearOpMode {
     private double armPower, gripPower;
     private double leftBackPower, rightBackPower, leftFrontPower, rightFrontPower;
     private int servoTimePer90Deg = 850;
+    public PIDController pidCorrection = new PIDController(.05, 0, 0);
 
     // Declare shared preference variables
     public SharedPreferences preferences;
@@ -69,10 +69,6 @@ public class MainTeleOp extends LinearOpMode {
         getPreferences();
         initCheck();
 
-        print("Status", "Initialized");
-        print("Alliance", teamColor);
-
-
         if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
         if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
         led.setPattern(pattern);
@@ -81,6 +77,7 @@ public class MainTeleOp extends LinearOpMode {
 
         gametime.reset();
         gametime.startTime();
+        resetAngle();
 
         while (opModeIsActive()) {
             noStart = !(gamepad1.start || gamepad2.start);
@@ -154,6 +151,11 @@ public class MainTeleOp extends LinearOpMode {
             //
             // ================================= POWER CONTROL =====================================
             //
+            if (driveYaw != 0) {
+                resetAngle();
+            } else {
+                correction = pidCorrection.performPID(getAngle());
+            }
             if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0
                     || gamepad1.right_stick_x != 0 || gamepad1.dpad_up || gamepad1.dpad_down
                     || gamepad1.dpad_left || gamepad1.dpad_right || gamepad1.x || gamepad1.b) {
@@ -173,13 +175,9 @@ public class MainTeleOp extends LinearOpMode {
             //
             // ================================ FEEDBACK CONTROL ===================================
             //
-            if (gametime.milliseconds() > 70000 && gametime.milliseconds() < 73000) {
-                led.setPattern(blinkPattern);
-            } else if (gametime.milliseconds() > 90000 && gametime.milliseconds() < 93000) {
-                led.setPattern(blinkPattern);
-            } else {
-                led.setPattern(pattern);
-            }
+            blinkLED(5000);
+            blinkLED(70000);
+            blinkLED(90000);
 
             print("Status", "Running");
             print("Alliance", teamColor);
@@ -201,6 +199,13 @@ public class MainTeleOp extends LinearOpMode {
     public void update() { telemetry.update(); }
     public double round(double val, int roundTo) {
         return Double.valueOf(String.format("%." + roundTo + "f", val));
+    }
+    public void blinkLED(int time) {
+        if (gametime.milliseconds() > time && gametime.milliseconds() < time+1000) {
+            led.setPattern(blinkPattern);
+        } else {
+            led.setPattern(pattern);
+        }
     }
 
     // Init functions
@@ -236,6 +241,12 @@ public class MainTeleOp extends LinearOpMode {
         rightFrontMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         gripMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // Set up parameters for driving in a straight line.
+        pidCorrection.setSetpoint(0);
+        pidCorrection.setOutputRange(0, drivePower);
+        pidCorrection.setInputRange(-90, 90);
+        pidCorrection.enable();
     }
     private boolean checkMotor() {
         if (gripMotor.getZeroPowerBehavior() == DcMotor.ZeroPowerBehavior.BRAKE) {
@@ -316,6 +327,23 @@ public class MainTeleOp extends LinearOpMode {
         rightBackMotor.setPower(rightBackPower);
         leftFrontMotor.setPower(leftFrontPower);
         rightFrontMotor.setPower(rightFrontPower);
+    }
+    public void resetAngle() {
+        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        globalAngle = 0;
+    }
+    private double getAngle() {
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+
+        if (deltaAngle < -180)
+            deltaAngle += 360;
+        else if (deltaAngle > 180)
+            deltaAngle -= 360;
+
+        globalAngle += deltaAngle;
+        lastAngles = angles;
+        return globalAngle;
     }
     public void stopMotor() {
         run(0, 0, 0, 0);

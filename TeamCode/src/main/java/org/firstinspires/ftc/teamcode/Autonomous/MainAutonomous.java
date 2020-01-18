@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.ftccommon.SoundPlayer;
 import java.lang.reflect.Array;
+
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -52,23 +54,29 @@ public class MainAutonomous extends LinearOpMode {
     public Servo leftServo, rightServo;
     public DigitalChannel topLimit, bottomLimit;
     public WebcamName LogitechC310;
+    public RevBlinkinLedDriver led;
 
     // Declare general variables
     public ElapsedTime runtime = new ElapsedTime();
+    public ElapsedTime gametime = new ElapsedTime();
     public boolean initReady = false;
     public static float inPerBlock = 23.625f;
     public static float fullSkystoneDist = 8.0f;
     public static float halfSkystoneDist = 4.0f;
+    public RevBlinkinLedDriver.BlinkinPattern pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
+    public RevBlinkinLedDriver.BlinkinPattern blinkPattern = RevBlinkinLedDriver.BlinkinPattern.VIOLET;
 
     // Declare movement variables
     public static final int ticksPerRev = 480;
     public Orientation lastAngles = new Orientation();
     public double globalAngle;
     public double correction;
-    public double drivePower = 0.35;
-    public double turnPower = 0.35;
+    public double drivePower = round((60.0/127.0), 2);
+    public double turnPower = round((60.0/127.0), 2);
+    public int currentDistance = 0;
+    public double minPower = 0.25;
+    public double currentPower = minPower;
     public PIDController pidRotate = new PIDController(0, 0, 0);
-    public PIDController pidCorrection = new PIDController(.05, 0, 0);
     public PIDController pidDrive = new PIDController(0, 0, 0);
 
     // Declare vuforia variables
@@ -150,7 +158,7 @@ public class MainAutonomous extends LinearOpMode {
     public void print(String caption, Object message) {
         telemetry.addData(caption, message);
     }
-    private void update() { telemetry.update(); }
+    public void update() { telemetry.update(); }
     private double round(double val, int roundTo) {
         return Double.valueOf(String.format("%." + roundTo + "f", val));
     }
@@ -209,6 +217,7 @@ public class MainAutonomous extends LinearOpMode {
         bottomLimit         = hardwareMap.get(DigitalChannel.class, "bottomLimit");
         LogitechC310        = hardwareMap.get(WebcamName.class, "Logitech C310");
         cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        led                 = hardwareMap.get(RevBlinkinLedDriver.class, "led");
     }
     private void initMotor() {
         leftBackMotor.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -223,12 +232,6 @@ public class MainAutonomous extends LinearOpMode {
         rightFrontMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         gripMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // Set up parameters for driving in a straight line.
-        pidCorrection.setSetpoint(0);
-        pidCorrection.setOutputRange(0, drivePower);
-        pidCorrection.setInputRange(-90, 90);
-        pidCorrection.enable();
     }
     private boolean checkMotor() {
         if (gripMotor.getZeroPowerBehavior() == DcMotor.ZeroPowerBehavior.BRAKE) {
@@ -240,8 +243,10 @@ public class MainAutonomous extends LinearOpMode {
     private void initServo() {
         leftServo.setPosition(0);
         rightServo.setPosition(1);
-        //leftSkystoneServo.setPosition(0.52);
-        //rightSkystoneServo.setPosition(0.98);
+
+        if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
+        if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
+        led.setPattern(pattern);
     }
     private boolean checkServo() {
         /*
@@ -480,7 +485,7 @@ public class MainAutonomous extends LinearOpMode {
     }
 
     // Movement functions
-    private void run(double leftBackPower, double rightBackPower, double leftFrontPower, double rightFrontPower) {
+    public void run(double leftBackPower, double rightBackPower, double leftFrontPower, double rightFrontPower) {
         leftBackMotor.setPower(leftBackPower);
         rightBackMotor.setPower(rightBackPower);
         leftFrontMotor.setPower(leftFrontPower);
@@ -501,7 +506,7 @@ public class MainAutonomous extends LinearOpMode {
                 duration = 850;
                 break;
             case "motor":
-                duration = 500;
+                duration = 400;
                 break;
             case "short motor":
                 duration = 100;
@@ -545,27 +550,28 @@ public class MainAutonomous extends LinearOpMode {
     private boolean bottomPressed() {
         return !bottomLimit.getState();
     }
-    private double getTick(String direction) {
+    private int getTick(String direction) {
         double firstTick = 0;
         double secondTick = 0;
         if (direction == "front") {
-            firstTick = Math.abs(leftFrontMotor.getCurrentPosition());
-            secondTick = Math.abs(rightFrontMotor.getCurrentPosition());
-        }
-        if (direction == "back") {
             firstTick = Math.abs(leftBackMotor.getCurrentPosition());
             secondTick = Math.abs(rightBackMotor.getCurrentPosition());
         }
-        if (direction == "left") {
-            firstTick = Math.abs(rightBackMotor.getCurrentPosition());
+        if (direction == "back") {
+            firstTick = Math.abs(leftFrontMotor.getCurrentPosition());
             secondTick = Math.abs(rightFrontMotor.getCurrentPosition());
         }
-        if (direction == "right") {
+        if (direction == "left") {
             firstTick = Math.abs(leftBackMotor.getCurrentPosition());
             secondTick = Math.abs(leftFrontMotor.getCurrentPosition());
         }
+        if (direction == "right") {
+            firstTick = Math.abs(rightBackMotor.getCurrentPosition());
+            secondTick = Math.abs(rightFrontMotor.getCurrentPosition());
+        }
 
-        return (firstTick + secondTick)/2.0;
+        int resultTick = (int)((firstTick + secondTick)/2.0);
+        return resultTick;
     }
     public void driveDist(String direction, double inches, double power) {
         double circumference    = Math.PI * 3.75;
@@ -573,27 +579,22 @@ public class MainAutonomous extends LinearOpMode {
         int ticks               = (int)(inches / inPerRev);
 
         pidDrive.reset();
-        double p                = Math.abs(power/ticks);
-        double i                = p/100.0;
+        mode("no encoder");
+        double p = Math.abs(power/ticks);
+        double i = p/100.0;
         pidDrive.setPID(p, i, 0);
         pidDrive.setSetpoint(ticks);
         pidDrive.setInputRange(0, ticks);
-        pidDrive.setOutputRange(0, power);
+        pidDrive.setOutputRange(0.2, power);
         pidDrive.setTolerance(1.0 / Math.abs(ticks) * 100.0);
         pidDrive.enable();
 
         do {
-            correction = pidCorrection.performPID(getAngle());
             power = pidDrive.performPID(getTick(direction));
-            if (direction == "front") {
-                run(power, power, power-correction, power+correction);
-            } else if (direction == "back") {
-                run(-power-correction, -power+correction, -power, -power);
-            } else if (direction == "left") {
-                run(power-correction, -power, -power-correction, power);
-            } else if (direction == "right") {
-                run(-power, power+correction, power, -power+correction);
-            }
+            if (direction == "front") run(power, power, power, power);
+            if (direction == "back") run(-power, -power, -power, -power);
+            if (direction == "left") run(power, -power, -power, power);
+            if (direction == "right") run(-power, power, power, -power);
         } while (opModeIsActive() && !pidDrive.onTarget());
 
         stopMotor();
@@ -602,6 +603,110 @@ public class MainAutonomous extends LinearOpMode {
     public void drive(String direction, double blocks, double power) {
         double inches = blocks * inPerBlock;
         driveDist(direction, inches, power);
+    }
+    /*
+    public void encoderDriveSmooth(String direction, double block) {
+        double distance = block * inPerBlock;
+        encoderDriveSmoothDist(direction, distance);
+    }
+    public void encoderDriveSmoothDist(String direction, double dist) {
+        double power = minPower;
+
+        double circumference = Math.PI * 3.75;
+        double inPerRev = circumference / ticksPerRev;
+        int axialDistance = (int) (dist / inPerRev);
+        int lateralDistance = (int) (dist * Math.sqrt(2) / inPerRev);
+        int diagonalDistance = (int) (dist * Math.sqrt(2) / inPerRev);
+
+        mode("reset");
+        switch (direction) {
+            case "front":
+                set(axialDistance, axialDistance, axialDistance, axialDistance);
+                break;
+            case "back":
+                set(-axialDistance, -axialDistance, -axialDistance, -axialDistance);
+                break;
+            case "left":
+                set(lateralDistance, -lateralDistance, -lateralDistance, lateralDistance);
+                break;
+            case "right":
+                set(-lateralDistance, lateralDistance, lateralDistance, -lateralDistance);
+                break;
+            case "front left":
+                set(diagonalDistance, 0, 0, diagonalDistance);
+                break;
+            case "front right":
+                set(0, diagonalDistance, diagonalDistance, 0);
+                break;
+            case "back left":
+                set(0, -diagonalDistance, -diagonalDistance, 0);
+                break;
+            case "back right":
+                set(-diagonalDistance, 0, 0, -diagonalDistance);
+                break;
+        }
+        mode("position");
+
+        run(power, power, power, power);
+        while (opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {
+            print("power", power);
+            print("target", axialDistance);
+            print("LBcurrent", leftBackMotor.getCurrentPosition());
+            print("RBcurrent", rightBackMotor.getCurrentPosition());
+            print("LFcurrent", leftFrontMotor.getCurrentPosition());
+            print("RFcurrent", rightFrontMotor.getCurrentPosition());
+            update();
+        }
+        stopMotor();
+    }
+    */
+    public void encoderDriveSmooth(String direction, double block) {
+        double inches = block * inPerBlock;
+        encoderDriveSmoothDist(direction, inches);
+    }
+    public void encoderDriveSmoothDist(String direction, double inches) {
+        currentDistance = 0;
+        currentPower = 0;
+
+        double circumference    = Math.PI * 3.75;
+        double inPerRev         = circumference / ticksPerRev;
+        int ticks               = (int)(inches / inPerRev);
+
+        int bufferTicks             = (int)(12.0/inPerRev);
+
+        mode("reset");
+        if (direction == "front") set(ticks, ticks, ticks, ticks);
+        if (direction == "back") set(-ticks, -ticks, -ticks, -ticks);
+        if (direction == "left") set(ticks, -ticks, -ticks, ticks);
+        if (direction == "right") set(-ticks, ticks, ticks, -ticks);
+        mode("position");
+
+        run(drivePower, drivePower, drivePower, drivePower);
+        while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {
+            currentDistance = getTick(direction);
+            int difference = Math.abs(ticks - currentDistance);
+            if(difference/bufferTicks <= drivePower) {
+                if(difference/bufferTicks >= minPower) {
+                    currentPower = drivePower * (difference/bufferTicks);
+                } else {
+                    currentPower = minPower;
+                }
+            } else {
+                currentPower = drivePower;
+            }
+            run (currentPower, currentPower, currentPower, currentPower);
+        }
+        stopMotor();
+    }
+    public void timeDrive(String direction, double power, int time) {
+        runtime.reset();
+        runtime.startTime();
+        mode("no encoder");
+        if (direction == "front") run(power, power, power, power);
+        if (direction == "back") run(-power, -power, -power, -power);
+        if (direction == "left") run(power, -power, -power, power);
+        if (direction == "right") run(-power, power, power, -power);
+        while (opModeIsActive() && runtime.milliseconds() < time) {}
     }
     public void resetAngle() {
         lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -621,16 +726,18 @@ public class MainAutonomous extends LinearOpMode {
         return globalAngle;
     }
     public void rotate(int degrees, double power) {
+        degrees = -degrees;
         resetAngle();
+        mode("no encoder");
         if (Math.abs(degrees) > 359) degrees = (int) Math.copySign(359, degrees);
 
         pidRotate.reset();
-        double p                = Math.abs(power/degrees);
-        double i                = p/100.0;
+        double p = Math.abs(power/degrees);
+        double i = p/50.0;
         pidRotate.setPID(p, i, 0);
         pidRotate.setSetpoint(degrees);
         pidRotate.setInputRange(0, degrees);
-        pidRotate.setOutputRange(0, power);
+        pidRotate.setOutputRange(0.2, power);
         pidRotate.setTolerance(1);
         pidRotate.enable();
 
@@ -710,30 +817,30 @@ public class MainAutonomous extends LinearOpMode {
         pause("servo");
         pause("servo");
     }
-    public void depotToBuildingSite(String alliance, double blocks, double drivePower, double turnPower) {
+    public void depotToBuildingSite(String alliance, double blocks) {
         switch (alliance) {
             case "blue":
                 rotate(-90, turnPower);
-                drive("front", blocks, drivePower);
+                encoderDriveSmooth("front", blocks);
                 rotate(90, turnPower);
                 break;
             case "red":
                 rotate(90, turnPower);
-                drive("front", blocks, drivePower);
+                encoderDriveSmooth("front", blocks);
                 rotate(-90, turnPower);
                 break;
         }
     }
-    public void buildingSiteToDepot(String alliance, double blocks, double drivePower, double turnPower) {
+    public void buildingSiteToDepot(String alliance, double blocks) {
         switch (alliance) {
             case "blue":
                 rotate(90, turnPower);
-                drive("front", blocks, drivePower);
+                encoderDriveSmooth("front", blocks);
                 rotate(-90, turnPower);
                 break;
             case "red":
                 rotate(-90, turnPower);
-                drive("front", blocks, drivePower);
+                encoderDriveSmooth("front", blocks);
                 rotate(90, turnPower);
                 break;
         }
@@ -741,35 +848,38 @@ public class MainAutonomous extends LinearOpMode {
     public void grabFoundation(String alliance) {
         rotate(90, turnPower);
         rotate(90, turnPower);
-        drive("back", drivePower, 0.5);
+        encoderDriveSmooth("back", 0.5);
         hookOn();
-        drive("front", drivePower, 1);
+        encoderDriveSmooth("front", 1);
         switch (alliance) {
             case "blue": rotate(-90, turnPower); break;
             case "red": rotate(90, turnPower); break;
         }
-        drive("back", drivePower, 0.25);
+        encoderDriveSmooth("back", 0.25);
         hookOff();
     }
-    public void grabSkystone(double power) {
+    public void grabSkystone() {
         armExtend();
         armRaise(250);
-        gripRelease(500);
-        driveDist("front", power, travelY);
+        gripRelease(250);
+        encoderDriveSmoothDist("front", travelY);
         armDrop(250);
         gripHold(500);
-        armRaise(500);
-        driveDist("back", power, travelY-0.5*inPerBlock);
+        armRaise(250);
+        encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
+    }
+    public void dropSkystone() {
+        gripRelease(500);
     }
     public void buildSkystone(double power, int height) {
         int duration = 500 * (height - 1);
         int doubleDuration = duration * 2;
         armRaise(doubleDuration);
-        driveDist("front", power, travelY-0.5*inPerBlock);
+        encoderDriveSmoothDist("front", travelY-0.5*inPerBlock);
         armDrop(duration);
         gripRelease(500);
         armRaise(150);
-        driveDist("back", power, travelY-0.5*inPerBlock);
+        encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
         armExtend();
     }
 }
