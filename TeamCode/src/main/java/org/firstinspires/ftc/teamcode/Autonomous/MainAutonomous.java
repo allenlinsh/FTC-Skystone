@@ -74,7 +74,7 @@ public class MainAutonomous extends LinearOpMode {
     public double globalAngle;
     public double correction;
     public double drivePower = round((100.0/127.0), 2);
-    public double turnPower = round((60.0/127.0), 2);
+    public double turnPower = round((80.0/127.0), 2);
     public int currentDistance = 0;
     public double minPower = 0.25;
     public double currentPower = minPower;
@@ -101,7 +101,7 @@ public class MainAutonomous extends LinearOpMode {
             "35GzpFlTXa1IhHjo0Lsvm2qTM8WqgLIKYYep1urYPAPYYUsT+WXUSLCbw0TkQcIVLP6FdvQL6FtCeRoA29f" +
             "pTdq5L4RFsdqac2fELdXY8rjZpJDx4g/8KN6aw1iG4ZocJBzgzhELtCgQbqJppGGk7z/CRTvcXL1dhIunZ";
     public int cameraMonitorViewId;
-    public boolean streamView                   = false;
+    public boolean streamView                   = true;
     public boolean targetVisible                = false;
     public boolean vuforiaReady                 = false;
     public boolean skystoneFound                = false;
@@ -261,14 +261,6 @@ public class MainAutonomous extends LinearOpMode {
         led.setPattern(pattern);
     }
     private boolean checkServo() {
-        /*
-        if (round(leftServo.getPosition(), 2) == 0 &&
-                round(rightServo.getPosition(), 2) == 1 &&
-                round(leftSkystoneServo.getPosition(), 2) == 0.52 &&
-                round(rightSkystoneServo.getPosition(), 2) == 0.98) {
-            return true;
-        }
-        */
         if (round(leftServo.getPosition(), 2) == 0 &&
                 round(rightServo.getPosition(), 2) == 1) {
             return true;
@@ -593,6 +585,7 @@ public class MainAutonomous extends LinearOpMode {
         int bufferTicks         = (int)(ticks*0.9);
         int sideBufferTicks     = (int)(sideTicks*0.9);
         double minOutput        = round(minPower*2/3.0, 2);
+        double percentError     = 0.05;
 
         mode("reset");
         if (direction == "front") set(ticks, ticks, ticks, ticks);
@@ -605,21 +598,26 @@ public class MainAutonomous extends LinearOpMode {
         while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {
             currentDistance = getTick(direction);
             if (direction == "front" || direction == "back") {
-                if (currentDistance < bufferTicks) {
+                if (currentDistance < bufferTicks && Math.abs(bufferTicks)-Math.abs(currentDistance) > ticks*percentError) {
                     currentPower = power - (power-minOutput) * currentDistance / bufferTicks;
                 } else if (currentDistance > bufferTicks) {
                     currentPower = minOutput;
                 }
             } else if (direction == "left" || direction == "right") {
-                if (currentDistance < sideBufferTicks) {
-                    currentPower = power - (power-minOutput) * currentDistance / sideBufferTicks;
+                if (currentDistance < sideBufferTicks && Math.abs(sideBufferTicks)-Math.abs(currentDistance) > sideTicks*percentError) {
+                    currentPower = power - (power-minPower) * currentDistance / sideBufferTicks;
                 } else if (currentDistance > sideBufferTicks) {
-                    currentPower = minOutput;
+                    currentPower = minPower;
                 }
             }
             run(currentPower, currentPower, currentPower, currentPower);
+            print("current",getTick(direction));
+            print("target", ticks);
+            print("side target", sideTicks);
+            update();
         }
         stopMotor();
+        gyro();
     }
     public void timeDrive(String direction, double power, int time) {
         runtime.reset();
@@ -654,7 +652,7 @@ public class MainAutonomous extends LinearOpMode {
         mode("no encoder");
         if (Math.abs(degrees) > 359) degrees = (int) Math.copySign(359, degrees);
 
-        double minOutput = round(minPower*2/3.0, 2);
+        double minOutput = minPower*1.5;
         double p = Math.abs(power/degrees);
         double i = p/50.0;
         pidRotate.reset();
@@ -679,7 +677,6 @@ public class MainAutonomous extends LinearOpMode {
                 run(-power, power, -power, power);
             } while (opModeIsActive() && !pidRotate.onTarget());
         }
-
         stopMotor();
         resetAngle();
     }
@@ -695,7 +692,7 @@ public class MainAutonomous extends LinearOpMode {
         pidRotate.setPID(p, i, 0);
         pidRotate.setSetpoint(degrees);
         pidRotate.setInputRange(0, degrees);
-        pidRotate.setOutputRange(minPower, power);
+        pidRotate.setOutputRange(minPower*2, power);
         pidRotate.setTolerance(1);
         pidRotate.enable();
 
@@ -715,6 +712,18 @@ public class MainAutonomous extends LinearOpMode {
         }
         stopMotor();
         resetAngle();
+    }
+    public void gyro() {
+        while (opModeIsActive() && Math.abs(getAngle()) > 1) {
+            if (getAngle() > 0) {
+                run(-minPower, minPower, -minPower, minPower);
+            }
+            else if (getAngle() < 0) {
+                run(minPower, -minPower, minPower, -minPower);
+            }
+            else return;
+        }
+        stopMotor();
     }
     public void armExtend() {
         armMotor.setPower(-1);
@@ -782,13 +791,14 @@ public class MainAutonomous extends LinearOpMode {
     public void dropSkystone() {
         gripRelease(gripDuration);
     }
-    public void buildSkystone(double power, int height) {
+    public void buildSkystone(int height) {
         int duration = armDuration * height;
         int doubleDuration = duration * 2;
         armRaise(duration);
-        encoderDriveSmoothDist("front", travelY-0.25*inPerBlock);
-        armDrop(doubleDuration);
+        encoderDriveSmoothDist("front", travelY-0.5*inPerBlock);
+        armDrop(duration);
         gripRelease(gripDuration);
-        armRaise(duration);
+        armRaise(armDuration);
+        encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
     }
 }

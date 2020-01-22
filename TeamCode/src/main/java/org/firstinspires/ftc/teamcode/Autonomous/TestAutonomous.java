@@ -65,14 +65,18 @@ public class TestAutonomous extends MainAutonomous {
             */
             //rotate(90, turnPower);
             //rotate(-90, turnPower);
-            encoderDriveSmooth("front", 1);
-            armExtend();
-            armRaise(50);
-            gripRelease(50);
-            encoderDriveSmooth("front", 0.25, drivePower);
-            armDrop(50);
-            gripHold(50);
-            armRaise(50);
+            //encoderDriveSmooth("front", 1);
+            //armExtend();
+            //armRaise(50);
+            //gripRelease(50);
+            //encoderDriveSmooth("front", 0.25, drivePower);
+            //armDrop(50);
+            //gripHold(50);
+            //armRaise(50);
+            //curve(-90, turnPower);
+            rotate(-90, turnPower);
+            //curve(-90, turnPower);
+            rotate(90, turnPower);
             //drive("back", 2, drivePower);
             //drive("left", 1, drivePower);
             //drive("right", 1, drivePower);

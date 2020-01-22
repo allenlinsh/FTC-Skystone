@@ -37,6 +37,8 @@ public class MainTeleOp extends LinearOpMode {
     private boolean noStart = true;
     public RevBlinkinLedDriver.BlinkinPattern pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
     public RevBlinkinLedDriver.BlinkinPattern blinkPattern = RevBlinkinLedDriver.BlinkinPattern.VIOLET;
+    public RevBlinkinLedDriver.BlinkinPattern black = RevBlinkinLedDriver.BlinkinPattern.BLACK;
+    public int totalSeconds, minute, second;
 
     // Declare movement variables
     private static final int ticksPerRev = 480;
@@ -173,17 +175,45 @@ public class MainTeleOp extends LinearOpMode {
             //
             // ================================ FEEDBACK CONTROL ===================================
             //
-            if (gametime.milliseconds() > 70000 && gametime.milliseconds() < 73000) {
+            if (gametime.milliseconds() < 70000) {
+                led.setPattern(pattern);
+            }else if (gametime.milliseconds() > 70000 && gametime.milliseconds() < 70250) {
                 led.setPattern(blinkPattern);
-            } else if (gametime.milliseconds() > 90000 && gametime.milliseconds() < 93000) {
+            } else if (gametime.milliseconds() > 70250 && gametime.milliseconds() < 70500) {
+                led.setPattern(black);
+            } else if (gametime.milliseconds() > 70500 && gametime.milliseconds() < 70750) {
                 led.setPattern(blinkPattern);
-            } else {
+            } else if (gametime.milliseconds() > 70750 && gametime.milliseconds() < 71000) {
+                led.setPattern(black);
+            } else if (gametime.milliseconds() > 71000 && gametime.milliseconds() < 71250) {
+                led.setPattern(blinkPattern);
+            } else if (gametime.milliseconds() > 71250 && gametime.milliseconds() < 71500) {
+                led.setPattern(black);
+            } else if (gametime.milliseconds() > 71500 && gametime.milliseconds() < 90000) {
+                led.setPattern(pattern);
+            } else if (gametime.milliseconds() > 90000 && gametime.milliseconds() < 90250) {
+                led.setPattern(blinkPattern);
+            } else if (gametime.milliseconds() > 90250 && gametime.milliseconds() < 90500) {
+                led.setPattern(black);
+            } else if (gametime.milliseconds() > 90500 && gametime.milliseconds() < 90750) {
+                led.setPattern(blinkPattern);
+            } else if (gametime.milliseconds() > 90750 && gametime.milliseconds() < 91000) {
+                led.setPattern(black);
+            } else if (gametime.milliseconds() > 91000 && gametime.milliseconds() < 91250) {
+                led.setPattern(blinkPattern);
+            } else if (gametime.milliseconds() > 91250 && gametime.milliseconds() < 91500) {
+                led.setPattern(black);
+            } else if (gametime.milliseconds() > 91500) {
                 led.setPattern(pattern);
             }
 
+            totalSeconds = (int)(120-gametime.time());
+            minute = (int)(Math.floor(totalSeconds/60.0));
+            second = totalSeconds-60*minute;
+
             print("Status", "Running");
             print("Alliance", teamColor);
-            print("time", gametime);
+            telemetry.addData("Time", "%d minutes %d seconds left", minute, second);
             print("Left Back Power", leftBackPower);
             print("Right Back Power", rightBackPower);
             print("Left Front Power", leftFrontPower);

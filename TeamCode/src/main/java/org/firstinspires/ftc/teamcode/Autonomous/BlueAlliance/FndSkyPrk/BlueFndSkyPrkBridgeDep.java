@@ -7,6 +7,7 @@ import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 @Autonomous(name = "BlueFndSkyPrkBridgeDep", group = "FndSkyPrk")
 public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
     public String className = getClass().getSimpleName();
+    public int numDelivered = 1;
     @Override
     public void runOpMode() {
         // Initialize autonomous route
@@ -42,48 +43,71 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
             runtime.startTime();
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
-            // Recognize skystone
+            gripRelease(gripDuration/2);
             playSound("ss_power_up");
-            encoderDriveSmooth("left", 0.25);
             encoderDriveSmooth("front", 0.5);
             recognizeTarget("Stone Target");
             playSound("ss_roger_roger");
             // 1st skystone
             encoderDriveSmoothDist("right", travelX);
 
-            armExtend();
-            armRaise(armDuration);
-            gripRelease(gripDuration);
             encoderDriveSmoothDist("front", travelY, minPower);
             armDrop(armDuration);
             gripHold(gripDuration);
-            armRaise(armDuration);
+            armRaise(armDuration*2);
             encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
 
             rotate(-90, turnPower);
-            encoderDriveSmooth("front", 3);
+            encoderDriveSmoothDist("front", 3*inPerBlock+travelX);
             rotate(90, turnPower);
-            encoderDriveSmoothDist("left", (travelX + firstPlacement));
-            buildSkystone(minPower, 1);
-            //encoderDriveSmoothDist("right", (travelX + firstPlacement));
+            encoderDriveSmoothDist("left", firstPlacement);
+            buildSkystone(1);
+
             // 2nd skystone
-            /*
-            buildingSiteToDepot("blue", minPower, minTurnPower, 4);
-            grabSkystone(minPower);
-            depotToBuildingSite("blue", minPower, minTurnPower, 4);
-            encoderDriveSmoothDist("left", minPower, (travelX + secondPlacement));
-            buildSkystone(minPower, 1);
-            */
+            if (numDelivered == 2) {
+                rotate(90, turnPower);
+                encoderDriveSmoothDist("front", 3 * inPerBlock + travelX);
+                rotate(-90, turnPower);
+                encoderDriveSmooth("right", 1);
+
+                encoderDriveSmoothDist("front", travelY - 0.5 * inPerBlock, minPower);
+                if (skystonePosition == "right") {
+                    rotate(45, turnPower);
+                }
+                armDrop(armDuration);
+                gripHold(gripDuration);
+                armRaise(armDuration);
+                if (skystonePosition == "right") {
+                    rotate(-45, turnPower);
+                }
+                encoderDriveSmoothDist("back", travelY - 0.5 * inPerBlock);
+
+                rotate(-90, turnPower);
+                encoderDriveSmoothDist("front", 4 * inPerBlock + travelX);
+                rotate(90, turnPower);
+
+                encoderDriveSmoothDist("left", secondPlacement);
+                buildSkystone(1);
+            }
             // Foundation
-            //encoderDriveSmoothDist("left", (centerPlacement - secondPlacement));
-            encoderDriveSmoothDist("left", (centerPlacement - firstPlacement));
-            encoderDriveSmoothDist("back", travelY-0.25*inPerBlock);
-            //grabFoundation("blue");
+            rotate(90, turnPower);
+            rotate(90, turnPower);
+            if (numDelivered == 1) {
+                encoderDriveSmoothDist("right", (centerPlacement - firstPlacement));
+            } else if (numDelivered == 2) {
+                encoderDriveSmoothDist("right", (centerPlacement - secondPlacement));
+            }
+            encoderDriveSmooth("back",0.25+0.1);
+            hookOn();
+            encoderDriveSmooth("front", 0.5+0.1);
+            curve(-90, turnPower);
+            encoderDriveSmooth("back", 0.75);
+            hookOff();
             // Parking
-            encoderDriveSmooth("left", 0.5);
+            encoderDriveSmoothDist("left", centerPlacement);
             armExtend();
             encoderDriveSmooth("front", 1.625);
-            timeDrive("left", minPower, 500);
+            encoderDriveSmooth("left", 0.25, minPower);
         }
         stopAllMotors();
         visionTargets.deactivate();

@@ -43,8 +43,8 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Recognize skystone
+            gripRelease(gripDuration/2);
             playSound("ss_power_up");
-            encoderDriveSmooth("left", 0.25);
             encoderDriveSmooth("front", 0.5);
             recognizeTarget("Stone Target");
             playSound("ss_roger_roger");
@@ -61,20 +61,27 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
 
             rotate(-90, turnPower);
-            encoderDriveSmooth("front", 2);
+            encoderDriveSmoothDist("front", 2*inPerBlock+travelX);
             dropSkystone();
             // 2nd skystone
-            encoderDriveSmooth("back", 3);
+            encoderDriveSmoothDist("back", 2*inPerBlock+travelX);
             rotate(90, turnPower);
+            encoderDriveSmooth("right", 1);
 
             encoderDriveSmoothDist("front", travelY-0.5*inPerBlock, minPower);
+            if (skystonePosition == "right") {
+                rotate(45, turnPower);
+            }
             armDrop(armDuration);
             gripHold(gripDuration);
             armRaise(armDuration);
+            if (skystonePosition == "right") {
+                rotate(-45, turnPower);
+            }
             encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
 
             rotate(-90, turnPower);
-            encoderDriveSmooth("front", 3);
+            encoderDriveSmoothDist("front", 3*inPerBlock+travelX);
             dropSkystone();
             encoderDriveSmooth("back", 0.625);
             encoderDriveSmooth("right", 0.25);
