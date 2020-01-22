@@ -43,13 +43,12 @@ public class BluePrkBridgeDep extends MainAutonomous {
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Parking
-            encoderDriveSmooth("front", 0.25);
+            playSound("ss_power_up");
+            encoderDriveSmooth("front", 1);
             rotate(90, turnPower);
             armExtend();
-            timeDrive("right", minPower, 1000);
-            encoderDriveSmooth("left", 1);
             encoderDriveSmooth("back", 1.625);
-            timeDrive("left", minPower, 500);
+            encoderDriveSmooth("left", 0.25);
         }
         stopAllMotors();
         visionTargets.deactivate();

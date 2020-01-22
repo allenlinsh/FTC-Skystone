@@ -1,11 +1,11 @@
-package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.FndPrk;
+package org.firstinspires.ftc.teamcode.Autonomous.RedAlliance.FndPrk;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
-@Autonomous(name = "BlueFndPrkBridgeBuild", group = "FndPrk")
-public class BlueFndPrkBridgeBuild extends MainAutonomous {
+@Autonomous(name = "RedFndPrkBridgeBuild", group = "FndPrk")
+public class RedFndPrkBridgeBuild extends MainAutonomous {
     private String className = getClass().getSimpleName();
     @Override
     public void runOpMode() {
@@ -43,19 +43,15 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Foundation
-            playSound("ss_power_up");
-            encoderDriveSmooth("back", 1.5);
+            encoderDriveSmooth("front", 1);
             encoderDriveSmoothDist("right", centerPlacement);
-            hookOn();
-            encoderDriveSmooth("front", 0.5);
-            curve(-90, turnPower);
-            encoderDriveSmooth("back", 0.5);
-            hookOff();
-            // Parking
+            grabFoundation("red");
             armExtend();
-            encoderDriveSmoothDist("left", centerPlacement);
-            encoderDriveSmooth("front", 1.625);
-            encoderDriveSmooth("left", 0.25, minPower);
+            // Parking
+            encoderDriveSmooth("left", 1.5, minPower);
+            encoderDriveSmooth("right", 1);
+            encoderDriveSmooth("front", 1.625, drivePower/2.0);
+            timeDrive("right", minPower, 500);
         }
         stopAllMotors();
         visionTargets.deactivate();

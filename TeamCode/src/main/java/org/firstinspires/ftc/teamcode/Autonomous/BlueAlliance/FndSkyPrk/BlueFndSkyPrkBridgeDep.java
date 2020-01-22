@@ -50,8 +50,19 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
             playSound("ss_roger_roger");
             // 1st skystone
             encoderDriveSmoothDist("right", travelX);
-            grabSkystone();
-            depotToBuildingSite("blue", 3);
+
+            armExtend();
+            armRaise(armDuration);
+            gripRelease(gripDuration);
+            encoderDriveSmoothDist("front", travelY, minPower);
+            armDrop(armDuration);
+            gripHold(gripDuration);
+            armRaise(armDuration);
+            encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
+
+            rotate(-90, turnPower);
+            encoderDriveSmooth("front", 3);
+            rotate(90, turnPower);
             encoderDriveSmoothDist("left", (travelX + firstPlacement));
             buildSkystone(minPower, 1);
             //encoderDriveSmoothDist("right", (travelX + firstPlacement));
@@ -66,10 +77,10 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
             // Foundation
             //encoderDriveSmoothDist("left", (centerPlacement - secondPlacement));
             encoderDriveSmoothDist("left", (centerPlacement - firstPlacement));
-            grabFoundation("blue");
-            timeDrive("right", minPower, 1000);
+            encoderDriveSmoothDist("back", travelY-0.25*inPerBlock);
+            //grabFoundation("blue");
             // Parking
-            encoderDriveSmooth("left", 1);
+            encoderDriveSmooth("left", 0.5);
             armExtend();
             encoderDriveSmooth("front", 1.625);
             timeDrive("left", minPower, 500);

@@ -1,12 +1,12 @@
-package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.FndPrk;
+package org.firstinspires.ftc.teamcode.Autonomous.RedAlliance.Prk;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
-@Autonomous(name = "BlueFndPrkBridgeBuild", group = "FndPrk")
-public class BlueFndPrkBridgeBuild extends MainAutonomous {
-    private String className = getClass().getSimpleName();
+@Autonomous(name = "RedPrkWallDep", group = "Prk")
+public class RedPrkWallDep extends MainAutonomous {
+    public String className = getClass().getSimpleName();
     @Override
     public void runOpMode() {
         // Initialize autonomous route
@@ -31,10 +31,10 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
         /* Autonomous
          * Team Alliance:           Blue
          * Skystone:                No
-         * Foundation:              Yes
+         * Foundation:              No
          * Parking:                 Yes
-         * Parking Position:        Bridge
-         * Start Position:          Building Site
+         * Parking Position:        Wall
+         * Start Position:          Depot
          */
 
         if (opModeIsActive()) {
@@ -42,20 +42,13 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
             runtime.startTime();
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
-            // Foundation
-            playSound("ss_power_up");
-            encoderDriveSmooth("back", 1.5);
-            encoderDriveSmoothDist("right", centerPlacement);
-            hookOn();
-            encoderDriveSmooth("front", 0.5);
-            curve(-90, turnPower);
-            encoderDriveSmooth("back", 0.5);
-            hookOff();
             // Parking
+            playSound("ss_power_up");
+            encoderDriveSmooth("front", 0.25);
+            rotate(-90, turnPower);
             armExtend();
-            encoderDriveSmoothDist("left", centerPlacement);
-            encoderDriveSmooth("front", 1.625);
-            encoderDriveSmooth("left", 0.25, minPower);
+            encoderDriveSmooth("back", 1.625);
+            encoderDriveSmooth("left", 0.25);
         }
         stopAllMotors();
         visionTargets.deactivate();

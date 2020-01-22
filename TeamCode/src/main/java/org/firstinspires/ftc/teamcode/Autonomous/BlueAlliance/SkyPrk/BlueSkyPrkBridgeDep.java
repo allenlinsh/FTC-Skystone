@@ -50,23 +50,34 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             playSound("ss_roger_roger");
             // 1st skystone
             encoderDriveSmoothDist("right", travelX);
-            grabSkystone();
+
+            armExtend();
+            armRaise(armDuration);
+            gripRelease(gripDuration);
+            encoderDriveSmoothDist("front", travelY, minPower);
+            armDrop(armDuration);
+            gripHold(gripDuration);
+            armRaise(armDuration);
+            encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
+
             rotate(-90, turnPower);
             encoderDriveSmooth("front", 2);
             dropSkystone();
             // 2nd skystone
             encoderDriveSmooth("back", 3);
-            armExtend();
             rotate(90, turnPower);
-            encoderDriveSmoothDist("right", travelX);
-            grabSkystone();
+
+            encoderDriveSmoothDist("front", travelY-0.5*inPerBlock, minPower);
+            armDrop(armDuration);
+            gripHold(gripDuration);
+            armRaise(armDuration);
+            encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
+
             rotate(-90, turnPower);
             encoderDriveSmooth("front", 3);
             dropSkystone();
-            // Parking
             encoderDriveSmooth("back", 0.625);
-            armExtend();
-            timeDrive("right", minPower, 500);
+            encoderDriveSmooth("right", 0.25);
         }
         stopAllMotors();
         visionTargets.deactivate();

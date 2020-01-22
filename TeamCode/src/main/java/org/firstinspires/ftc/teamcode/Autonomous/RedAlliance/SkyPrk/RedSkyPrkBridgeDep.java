@@ -1,11 +1,11 @@
-package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.FndPrk;
+package org.firstinspires.ftc.teamcode.Autonomous.RedAlliance.SkyPrk;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
-@Autonomous(name = "BlueFndPrkBridgeBuild", group = "FndPrk")
-public class BlueFndPrkBridgeBuild extends MainAutonomous {
+@Autonomous(name = "RedSkyPrkBridgeDep", group = "SkyPrk")
+public class RedSkyPrkBridgeDep extends MainAutonomous {
     private String className = getClass().getSimpleName();
     @Override
     public void runOpMode() {
@@ -30,11 +30,11 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
 
         /* Autonomous
          * Team Alliance:           Blue
-         * Skystone:                No
-         * Foundation:              Yes
+         * Skystone:                Yes
+         * Foundation:              No
          * Parking:                 Yes
          * Parking Position:        Bridge
-         * Start Position:          Building Site
+         * Start Position:          Depot
          */
 
         if (opModeIsActive()) {
@@ -42,20 +42,28 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
             runtime.startTime();
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
-            // Foundation
+            // Recognize skystone
             playSound("ss_power_up");
-            encoderDriveSmooth("back", 1.5);
-            encoderDriveSmoothDist("right", centerPlacement);
-            hookOn();
+            encoderDriveSmooth("right", 0.4);
             encoderDriveSmooth("front", 0.5);
-            curve(-90, turnPower);
-            encoderDriveSmooth("back", 0.5);
-            hookOff();
-            // Parking
+            recognizeTarget("Stone Target");
+            playSound("ss_roger_roger");
+            // 1st skystone
+            encoderDriveSmoothDist("right", travelX);
+            gripRelease(150);
+            grabSkystone();
+            rotate(90, turnPower);
+            encoderDriveSmooth("front", 2);
+            dropSkystone();
+            // 2nd skystone
+            encoderDriveSmooth("back", 3);
+            rotate(-90, turnPower);
+            grabSkystone();
+            rotate(90, turnPower);
+            encoderDriveSmooth("front", 3);
+            dropSkystone();
             armExtend();
-            encoderDriveSmoothDist("left", centerPlacement);
-            encoderDriveSmooth("front", 1.625);
-            encoderDriveSmooth("left", 0.25, minPower);
+            encoderDriveSmooth("back", 0.625);
         }
         stopAllMotors();
         visionTargets.deactivate();

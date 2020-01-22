@@ -43,12 +43,12 @@ public class BluePrkWallDep extends MainAutonomous {
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Parking
+            playSound("ss_power_up");
             encoderDriveSmooth("front", 0.25);
             rotate(90, turnPower);
             armExtend();
-            timeDrive("right", minPower, 1000);
-            encoderDriveSmooth("right", 0.5);
             encoderDriveSmooth("back", 1.625);
+            encoderDriveSmooth("right", 0.25);
         }
         stopAllMotors();
         visionTargets.deactivate();
