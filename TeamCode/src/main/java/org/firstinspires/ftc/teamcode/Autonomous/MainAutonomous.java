@@ -80,6 +80,7 @@ public class MainAutonomous extends LinearOpMode {
     public double currentPower = minPower;
     public int armDuration = 100;
     public int gripDuration = 150;
+    public double driftK = 1.2;
     public PIDController pidRotate = new PIDController(0, 0, 0);
     public PIDController pidDrive = new PIDController(0, 0, 0);
     public PIDController pidCorrection = new PIDController(.05, 0, 0);
@@ -510,7 +511,7 @@ public class MainAutonomous extends LinearOpMode {
                 duration = 1700;
                 break;
             case "motor":
-                duration = 400;
+                duration = 300;
                 break;
             case "short motor":
                 duration = 100;
@@ -581,40 +582,35 @@ public class MainAutonomous extends LinearOpMode {
         double circumference    = Math.PI * wheelDiameter;
         double inPerRev         = circumference / ticksPerRev;
         int ticks               = (int)(inches / inPerRev);
-        int sideTicks           = (int)(Math.sqrt(2)*ticks);
+        int sideTicks           = (int)(1.15*ticks);
         int bufferTicks         = (int)(ticks*0.9);
         int sideBufferTicks     = (int)(sideTicks*0.9);
         double minOutput        = round(minPower*2/3.0, 2);
-        double percentError     = 0.05;
 
         mode("reset");
         if (direction == "front") set(ticks, ticks, ticks, ticks);
         if (direction == "back") set(-ticks, -ticks, -ticks, -ticks);
-        if (direction == "left") set(sideTicks, -sideTicks, -sideTicks, sideTicks);
-        if (direction == "right") set(-sideTicks, sideTicks, sideTicks, -sideTicks);
+        if (direction == "left") set(sideTicks, -sideTicks, -(int)(sideTicks), (int)(sideTicks));
+        if (direction == "right") set(-sideTicks, sideTicks, (int)(sideTicks), -(int)(sideTicks));
         mode("position");
 
         run(power, power, power, power);
         while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {
             currentDistance = getTick(direction);
             if (direction == "front" || direction == "back") {
-                if (currentDistance < bufferTicks && Math.abs(bufferTicks)-Math.abs(currentDistance) > ticks*percentError) {
+                if (currentDistance < bufferTicks && Math.abs(bufferTicks)-Math.abs(currentDistance) > 50) {
                     currentPower = power - (power-minOutput) * currentDistance / bufferTicks;
                 } else if (currentDistance > bufferTicks) {
                     currentPower = minOutput;
                 }
             } else if (direction == "left" || direction == "right") {
-                if (currentDistance < sideBufferTicks && Math.abs(sideBufferTicks)-Math.abs(currentDistance) > sideTicks*percentError) {
-                    currentPower = power - (power-minPower) * currentDistance / sideBufferTicks;
+                if (currentDistance < sideBufferTicks && Math.abs(sideBufferTicks)-Math.abs(currentDistance) > 50) {
+                    currentPower = power/2.0 - (power/2.0-minPower) * currentDistance / sideBufferTicks;
                 } else if (currentDistance > sideBufferTicks) {
                     currentPower = minPower;
                 }
             }
             run(currentPower, currentPower, currentPower, currentPower);
-            print("current",getTick(direction));
-            print("target", ticks);
-            print("side target", sideTicks);
-            update();
         }
         stopMotor();
         gyro();
@@ -652,9 +648,9 @@ public class MainAutonomous extends LinearOpMode {
         mode("no encoder");
         if (Math.abs(degrees) > 359) degrees = (int) Math.copySign(359, degrees);
 
-        double minOutput = minPower*1.5;
+        double minOutput = round(minPower*4/5.0, 2);
         double p = Math.abs(power/degrees);
-        double i = p/50.0;
+        double i = p/200.0;
         pidRotate.reset();
         pidRotate.setPID(p, i, 0);
         pidRotate.setSetpoint(degrees);
@@ -714,14 +710,15 @@ public class MainAutonomous extends LinearOpMode {
         resetAngle();
     }
     public void gyro() {
+        mode("no encoder");
+        double minOutput = round(minPower*4/5.0, 2);
+
         while (opModeIsActive() && Math.abs(getAngle()) > 1) {
-            if (getAngle() > 0) {
-                run(-minPower, minPower, -minPower, minPower);
-            }
-            else if (getAngle() < 0) {
-                run(minPower, -minPower, minPower, -minPower);
-            }
-            else return;
+            if (getAngle() < 0) {
+                run(-minOutput, minOutput, -minOutput, minOutput);
+            } else if (getAngle() > 0) {
+                run(minOutput, -minOutput, minOutput, -minOutput);
+            } else return;
         }
         stopMotor();
     }

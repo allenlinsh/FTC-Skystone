@@ -63,6 +63,8 @@ public class TestAutonomous extends MainAutonomous {
             stopAllMotors();
             armCollapse();
             */
+            //encoderDriveSmooth("left", 1, drivePower);
+            //rotate(180,turnPower);
             //rotate(90, turnPower);
             //rotate(-90, turnPower);
             //encoderDriveSmooth("front", 1);
@@ -74,7 +76,7 @@ public class TestAutonomous extends MainAutonomous {
             //gripHold(50);
             //armRaise(50);
             //curve(-90, turnPower);
-            rotate(-90, turnPower);
+            //rotate(-90, turnPower);
             //curve(-90, turnPower);
             rotate(90, turnPower);
             //drive("back", 2, drivePower);
