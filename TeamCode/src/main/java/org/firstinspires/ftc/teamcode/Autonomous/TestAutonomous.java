@@ -67,7 +67,10 @@ public class TestAutonomous extends MainAutonomous {
             //rotate(180,turnPower);
             //rotate(90, turnPower);
             //rotate(-90, turnPower);
-            //encoderDriveSmooth("front", 1);
+            //encoderDriveSmoothDist("left", 12);
+            rotate(90, turnPower);
+            rotate(-90, turnPower);
+            rotate(-15, turnPower);
             //armExtend();
             //armRaise(50);
             //gripRelease(50);
@@ -78,7 +81,8 @@ public class TestAutonomous extends MainAutonomous {
             //curve(-90, turnPower);
             //rotate(-90, turnPower);
             //curve(-90, turnPower);
-            rotate(90, turnPower);
+            //rotate(90, turnPower);
+            //encoderDriveSmoothDist("right", travelX);
             //drive("back", 2, drivePower);
             //drive("left", 1, drivePower);
             //drive("right", 1, drivePower);
@@ -87,9 +91,9 @@ public class TestAutonomous extends MainAutonomous {
             recognizeSkystone("blue");
              */
             //grabFoundation("blue");
-            while (opModeIsActive() && runtime.milliseconds() < 30000) {}
+
+            stopAllMotors();
+            visionTargets.deactivate();
         }
-        stopAllMotors();
-        visionTargets.deactivate();
     }
 }

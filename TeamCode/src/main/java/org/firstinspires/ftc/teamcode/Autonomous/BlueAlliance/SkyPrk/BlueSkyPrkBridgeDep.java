@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.SkyPrk;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
@@ -23,6 +24,10 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
         print("Parking Position", parking);
         print("Starting Position", starting);
         telemetry.update();
+
+        if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
+        if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
+        led.setPattern(pattern);
 
         waitForStart();
         print("Status", "Running");
@@ -51,6 +56,7 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             // 1st skystone
             encoderDriveSmoothDist("right", travelX);
 
+            // grab skystone
             armExtend();
             armRaise(armDuration);
             gripRelease(gripDuration);
@@ -58,35 +64,42 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             armDrop(armDuration);
             gripHold(gripDuration);
             armRaise(armDuration);
-            encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
+            encoderDriveSmoothDist("back", travelY - 0.5*inPerBlock + movementError*inPerBlock);
 
+            // depot to building site
             rotate(-90, turnPower);
-            encoderDriveSmoothDist("front", 2*inPerBlock+travelX);
+            encoderDriveSmoothDist("front", 2*inPerBlock + travelX);
             dropSkystone();
+
             // 2nd skystone
-            encoderDriveSmoothDist("back", 2*inPerBlock+travelX);
+            // building site to depot
+            encoderDriveSmoothDist("back", 2*inPerBlock + travelX + leftTranslation);
             rotate(90, turnPower);
             encoderDriveSmooth("right", 1);
 
-            encoderDriveSmoothDist("front", travelY-0.5*inPerBlock, minPower);
+            // grab skystone
+            encoderDriveSmoothDist("front", travelY - 0.5*inPerBlock + movementError*inPerBlock, minPower);
             if (skystonePosition == "right") {
-                rotate(45, turnPower);
+                rotate(15, turnPower);
             }
             armDrop(armDuration);
             gripHold(gripDuration);
             armRaise(armDuration);
-            if (skystonePosition == "right") {
-                rotate(-45, turnPower);
-            }
-            encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
+            encoderDriveSmoothDist("back", travelY - 0.5*inPerBlock + movementError*inPerBlock);
 
-            rotate(-90, turnPower);
-            encoderDriveSmoothDist("front", 3*inPerBlock+travelX);
+            // depot to building site
+            if (skystonePosition == "right") {
+                rotate(-105, turnPower);
+            } else {
+                rotate(-90, turnPower);
+            }
+            encoderDriveSmoothDist("front", 3*inPerBlock + travelX);
             dropSkystone();
             encoderDriveSmooth("back", 0.625);
             encoderDriveSmooth("right", 0.25);
+
+            stopAllMotors();
+            visionTargets.deactivate();
         }
-        stopAllMotors();
-        visionTargets.deactivate();
     }
 }

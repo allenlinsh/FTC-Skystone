@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.Prk;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
@@ -23,6 +24,10 @@ public class BluePrkWallBuild extends MainAutonomous {
         print("Parking Position", parking);
         print("Starting Position", starting);
         telemetry.update();
+
+        if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
+        if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
+        led.setPattern(pattern);
 
         waitForStart();
         print("Status", "Running");

@@ -81,9 +81,9 @@ public class MainAutonomous extends LinearOpMode {
     public int armDuration = 100;
     public int gripDuration = 150;
     public double driftK = 1.2;
+    public double movementError = 0.2;
     public PIDController pidRotate = new PIDController(0, 0, 0);
-    public PIDController pidDrive = new PIDController(0, 0, 0);
-    public PIDController pidCorrection = new PIDController(.05, 0, 0);
+    //public PIDController pidCorrection = new PIDController(.05, 0, 0);
 
     // Declare vuforia variables
     public VuforiaLocalizer vuforia;
@@ -102,7 +102,7 @@ public class MainAutonomous extends LinearOpMode {
             "35GzpFlTXa1IhHjo0Lsvm2qTM8WqgLIKYYep1urYPAPYYUsT+WXUSLCbw0TkQcIVLP6FdvQL6FtCeRoA29f" +
             "pTdq5L4RFsdqac2fELdXY8rjZpJDx4g/8KN6aw1iG4ZocJBzgzhELtCgQbqJppGGk7z/CRTvcXL1dhIunZ";
     public int cameraMonitorViewId;
-    public boolean streamView                   = true;
+    public boolean streamView                   = false;
     public boolean targetVisible                = false;
     public boolean vuforiaReady                 = false;
     public boolean skystoneFound                = false;
@@ -131,9 +131,12 @@ public class MainAutonomous extends LinearOpMode {
     public float robotWidth                     = 18.00f;
     public float robotLength                    = 18.00f;
     public float robotHeight                    = 14.00f;
+    // Distance from front of robot to webcam
     public float frontTranslation               = 112.0f / mmPerInch;
+    // Distance from starting position at depot to actual setup position
+    public float leftTranslation                = 2.5f;
     // Distance to travel from front of robot to center of target
-    public float travelX                        = 2.0f * fullSkystoneDist + halfSkystoneDist - (robotWidth / 2.0f);
+    public float travelX                        = 2.0f*fullSkystoneDist + 1.5f*halfSkystoneDist - (robotWidth / 2.0f);
     public float travelY                        = inPerBlock - frontTranslation;
     // Location of center of skystone placement with relation to wall
     public float firstSkystone                  = 13.25f;
@@ -239,11 +242,13 @@ public class MainAutonomous extends LinearOpMode {
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         gripMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        /*
         // Set up parameters for driving in a straight line.
         pidCorrection.setSetpoint(0);
         pidCorrection.setOutputRange(0, drivePower);
         pidCorrection.setInputRange(-90, 90);
         pidCorrection.enable();
+        */
     }
     private boolean checkMotor() {
         if (gripMotor.getZeroPowerBehavior() == DcMotor.ZeroPowerBehavior.BRAKE) {
@@ -256,10 +261,6 @@ public class MainAutonomous extends LinearOpMode {
         leftServo.setPosition(0);
         rightServo.setPosition(1);
         pause("servo");
-
-        if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
-        if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
-        led.setPattern(pattern);
     }
     private boolean checkServo() {
         if (round(leftServo.getPosition(), 2) == 0 &&
@@ -478,7 +479,7 @@ public class MainAutonomous extends LinearOpMode {
             } else {
                 print("Visible Target", "none");
                 skystonePosition = "right";
-                if (runtime.milliseconds() > 1500) break;
+                if (runtime.milliseconds() > 1000) break;
             }
 
             // Update the skystone's position in terms of "left", "center", and "right"
@@ -557,11 +558,14 @@ public class MainAutonomous extends LinearOpMode {
     }
     private int getTick(String direction) {
         int resultTick = 0;
+        /*
         if (direction == "front" || direction == "back") {
             resultTick = (int)((Math.abs(leftBackMotor.getCurrentPosition())+Math.abs(rightBackMotor.getCurrentPosition()))/2.0);
         } else if (direction == "left" || direction == "right") {
             resultTick = (int)((Math.abs(rightFrontMotor.getCurrentPosition())+Math.abs(rightBackMotor.getCurrentPosition()))/2.0);
         }
+        */
+        resultTick = (int)(Math.abs(leftBackMotor.getCurrentPosition()));
         return resultTick;
     }
     public void encoderDriveSmooth(String direction, double block) {
@@ -579,13 +583,20 @@ public class MainAutonomous extends LinearOpMode {
         currentDistance = 0;
         currentPower = 0;
 
+        if (power < minPower) {
+            power = minPower;
+        } else if (power > drivePower) {
+            power = drivePower;
+        }
+
         double circumference    = Math.PI * wheelDiameter;
         double inPerRev         = circumference / ticksPerRev;
         int ticks               = (int)(inches / inPerRev);
         int sideTicks           = (int)(1.15*ticks);
         int bufferTicks         = (int)(ticks*0.9);
         int sideBufferTicks     = (int)(sideTicks*0.9);
-        double minOutput        = round(minPower*2/3.0, 2);
+        double minOutput        = round(minPower, 2);
+        double sideMinOutput    = round(1.25*minOutput, 2);
 
         mode("reset");
         if (direction == "front") set(ticks, ticks, ticks, ticks);
@@ -598,22 +609,30 @@ public class MainAutonomous extends LinearOpMode {
         while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {
             currentDistance = getTick(direction);
             if (direction == "front" || direction == "back") {
-                if (currentDistance < bufferTicks && Math.abs(bufferTicks)-Math.abs(currentDistance) > 50) {
-                    currentPower = power - (power-minOutput) * currentDistance / bufferTicks;
-                } else if (currentDistance > bufferTicks) {
+                if (ticks > 1000) {
+                    if (currentDistance < bufferTicks) {
+                        currentPower = power - (power-minOutput) * currentDistance / bufferTicks;
+                    } else if (currentDistance > bufferTicks && currentDistance < ticks) {
+                        currentPower = minOutput;
+                    }
+                }
+                else if (ticks < 1000){
                     currentPower = minOutput;
                 }
             } else if (direction == "left" || direction == "right") {
-                if (currentDistance < sideBufferTicks && Math.abs(sideBufferTicks)-Math.abs(currentDistance) > 50) {
-                    currentPower = power/2.0 - (power/2.0-minPower) * currentDistance / sideBufferTicks;
-                } else if (currentDistance > sideBufferTicks) {
-                    currentPower = minPower;
+                if (sideTicks > 1.15*1000) {
+                    if (currentDistance < sideBufferTicks) {
+                        currentPower = power / 2.0 - (power / 2.0 - minPower) * currentDistance / sideBufferTicks;
+                    } else if (currentDistance > sideBufferTicks && currentDistance < sideTicks) {
+                        currentPower = sideMinOutput;
+                    }
+                } else if (sideTicks < 1.15*1000){
+                    currentPower = sideMinOutput;
                 }
             }
             run(currentPower, currentPower, currentPower, currentPower);
         }
         stopMotor();
-        gyro();
     }
     public void timeDrive(String direction, double power, int time) {
         runtime.reset();
@@ -648,14 +667,20 @@ public class MainAutonomous extends LinearOpMode {
         mode("no encoder");
         if (Math.abs(degrees) > 359) degrees = (int) Math.copySign(359, degrees);
 
-        double minOutput = round(minPower*4/5.0, 2);
+        if (power < minPower) {
+            power = minPower;
+        } else if (power > turnPower) {
+            power = turnPower;
+        }
+
+        double minOutput = round(minPower, 2);
         double p = Math.abs(power/degrees);
         double i = p/200.0;
         pidRotate.reset();
         pidRotate.setPID(p, i, 0);
         pidRotate.setSetpoint(degrees);
         pidRotate.setInputRange(0, degrees);
-        pidRotate.setOutputRange(minOutput, power);
+        pidRotate.setOutputRange(minOutput, power*2);
         pidRotate.setTolerance(1);
         pidRotate.enable();
 
@@ -682,28 +707,35 @@ public class MainAutonomous extends LinearOpMode {
         mode("no encoder");
         if (Math.abs(degrees) > 359) degrees = (int) Math.copySign(359, degrees);
 
+        if (power < minPower) {
+            power = minPower*2;
+        } else if (power > 1) {
+            power = 1;
+        }
+
+        double minOutput = round(minPower*2, 2);
         double p = Math.abs(power/degrees);
-        double i = p/100.0;
+        double i = p/200.0;
         pidRotate.reset();
         pidRotate.setPID(p, i, 0);
         pidRotate.setSetpoint(degrees);
         pidRotate.setInputRange(0, degrees);
-        pidRotate.setOutputRange(minPower*2, power);
+        pidRotate.setOutputRange(minOutput, 1);
         pidRotate.setTolerance(1);
         pidRotate.enable();
 
         if (degrees < 0) {
             while (opModeIsActive() && getAngle() == 0) {
-                run(0, -power, 0, -power);
+                run(minPower, -power, minPower, -power);
             }
             do {
                 power = pidRotate.performPID(getAngle());
-                run(-power, 0, -power, 0);
+                run(-power, minPower, -power, minPower);
             } while (opModeIsActive() && !pidRotate.onTarget());
         } else {
             do {
                 power = pidRotate.performPID(getAngle());
-                run(0, power, 0, power);
+                run(-minPower, power, -minPower, power);
             } while (opModeIsActive() && !pidRotate.onTarget());
         }
         stopMotor();
@@ -711,7 +743,7 @@ public class MainAutonomous extends LinearOpMode {
     }
     public void gyro() {
         mode("no encoder");
-        double minOutput = round(minPower*4/5.0, 2);
+        double minOutput = round(minPower, 2);
 
         while (opModeIsActive() && Math.abs(getAngle()) > 1) {
             if (getAngle() < 0) {
@@ -775,16 +807,6 @@ public class MainAutonomous extends LinearOpMode {
         rightServo.setPosition(1);
         pause("servo");
     }
-    public void grabSkystone() {
-        armExtend();
-        armRaise(armDuration);
-        gripRelease(gripDuration);
-        encoderDriveSmoothDist("front", travelY, minPower);
-        armDrop(armDuration);
-        gripHold(gripDuration);
-        armRaise(armDuration);
-        encoderDriveSmoothDist("back", travelY-0.25*inPerBlock);
-    }
     public void dropSkystone() {
         gripRelease(gripDuration);
     }
@@ -792,10 +814,10 @@ public class MainAutonomous extends LinearOpMode {
         int duration = armDuration * height;
         int doubleDuration = duration * 2;
         armRaise(duration);
-        encoderDriveSmoothDist("front", travelY-0.5*inPerBlock);
+        encoderDriveSmoothDist("front", travelY - 0.5*inPerBlock + movementError*inPerBlock);
         armDrop(duration);
         gripRelease(gripDuration);
         armRaise(armDuration);
-        encoderDriveSmoothDist("back", travelY-0.5*inPerBlock);
+        encoderDriveSmoothDist("back", travelY - 0.5*inPerBlock + movementError*inPerBlock);
     }
 }
