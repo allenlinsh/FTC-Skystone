@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Autonomous.RedAlliance.Prk;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
@@ -24,6 +25,10 @@ public class RedPrkBridgeBuild extends MainAutonomous {
         print("Starting Position", starting);
         telemetry.update();
 
+        if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
+        if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
+        led.setPattern(pattern);
+
         waitForStart();
         print("Status", "Running");
         telemetry.update();
@@ -43,14 +48,16 @@ public class RedPrkBridgeBuild extends MainAutonomous {
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Parking
+            gripRelease(gripDuration/2);
             playSound("ss_power_up");
             encoderDriveSmooth("front", 1);
             rotate(-90, turnPower);
             armExtend();
             encoderDriveSmooth("front", 1.625);
             encoderDriveSmooth("right", 0.25);
+
+            stopAllMotors();
+            visionTargets.deactivate();
         }
-        stopAllMotors();
-        visionTargets.deactivate();
     }
 }

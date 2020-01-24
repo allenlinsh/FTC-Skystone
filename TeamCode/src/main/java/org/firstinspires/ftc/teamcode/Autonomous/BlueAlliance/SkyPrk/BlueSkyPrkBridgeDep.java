@@ -50,7 +50,7 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             // Recognize skystone
             gripRelease(gripDuration/2);
             playSound("ss_power_up");
-            encoderDriveSmooth("front", 0.5);
+            encoderDriveSmooth("front", detectionTransition);
             recognizeTarget("Stone Target");
             playSound("ss_roger_roger");
             // 1st skystone
@@ -64,7 +64,7 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             armDrop(armDuration);
             gripHold(gripDuration);
             armRaise(armDuration);
-            encoderDriveSmoothDist("back", travelY - 0.5*inPerBlock + movementError*inPerBlock);
+            encoderDriveSmoothDist("back", travelY - (1-detectionTransition)*inPerBlock + skystoneMovementError*inPerBlock, minPower);
 
             // depot to building site
             rotate(-90, turnPower);
@@ -78,18 +78,26 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             encoderDriveSmooth("right", 1);
 
             // grab skystone
-            encoderDriveSmoothDist("front", travelY - 0.5*inPerBlock + movementError*inPerBlock, minPower);
+            encoderDriveSmoothDist("front", travelY - (1-detectionTransition)*inPerBlock + skystoneMovementError*inPerBlock, minPower);
             if (skystonePosition == "right") {
                 rotate(15, turnPower);
             }
             armDrop(armDuration);
             gripHold(gripDuration);
             armRaise(armDuration);
-            encoderDriveSmoothDist("back", travelY - 0.5*inPerBlock + movementError*inPerBlock);
+            if (skystonePosition == "right") {
+                rotate(-15, turnPower);
+            }
+            encoderDriveSmoothDist("back", travelY - (1-detectionTransition)*inPerBlock + skystoneMovementError*inPerBlock, minPower);
 
             // depot to building site
             if (skystonePosition == "right") {
-                rotate(-105, turnPower);
+                rotate(-15, turnPower);
+                rotate(-15, turnPower);
+                rotate(-15, turnPower);
+                rotate(-15, turnPower);
+                rotate(-15, turnPower);
+                rotate(-15, turnPower);
             } else {
                 rotate(-90, turnPower);
             }

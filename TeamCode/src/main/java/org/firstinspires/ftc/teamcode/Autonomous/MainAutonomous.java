@@ -77,11 +77,14 @@ public class MainAutonomous extends LinearOpMode {
     public double turnPower = round((80.0/127.0), 2);
     public int currentDistance = 0;
     public double minPower = 0.25;
+    public double sideMinPower = 1.25*0.25;
     public double currentPower = minPower;
-    public int armDuration = 100;
+    public int armDuration = 125;
     public int gripDuration = 150;
     public double driftK = 1.2;
-    public double movementError = 0.2;
+    public double skystoneMovementError = 0;
+    public double foundationMovementError = 0;
+    public double detectionTransition = 0.5;
     public PIDController pidRotate = new PIDController(0, 0, 0);
     //public PIDController pidCorrection = new PIDController(.05, 0, 0);
 
@@ -102,7 +105,7 @@ public class MainAutonomous extends LinearOpMode {
             "35GzpFlTXa1IhHjo0Lsvm2qTM8WqgLIKYYep1urYPAPYYUsT+WXUSLCbw0TkQcIVLP6FdvQL6FtCeRoA29f" +
             "pTdq5L4RFsdqac2fELdXY8rjZpJDx4g/8KN6aw1iG4ZocJBzgzhELtCgQbqJppGGk7z/CRTvcXL1dhIunZ";
     public int cameraMonitorViewId;
-    public boolean streamView                   = false;
+    public boolean streamView                   = true;
     public boolean targetVisible                = false;
     public boolean vuforiaReady                 = false;
     public boolean skystoneFound                = false;
@@ -134,7 +137,7 @@ public class MainAutonomous extends LinearOpMode {
     // Distance from front of robot to webcam
     public float frontTranslation               = 112.0f / mmPerInch;
     // Distance from starting position at depot to actual setup position
-    public float leftTranslation                = 2.5f;
+    public float leftTranslation                = 0f;
     // Distance to travel from front of robot to center of target
     public float travelX                        = 2.0f*fullSkystoneDist + 1.5f*halfSkystoneDist - (robotWidth / 2.0f);
     public float travelY                        = inPerBlock - frontTranslation;
@@ -435,6 +438,7 @@ public class MainAutonomous extends LinearOpMode {
         runtime.reset();
         runtime.startTime();
         boolean targetFound = false;
+
         while(opModeIsActive() && checkVuforia()) {
             String targetName = "";
             targetVisible = false;
@@ -643,6 +647,7 @@ public class MainAutonomous extends LinearOpMode {
         if (direction == "left") run(power, -power, -power, power);
         if (direction == "right") run(-power, power, power, -power);
         while (opModeIsActive() && runtime.milliseconds() < time) {}
+        stopMotor();
     }
     public void resetAngle() {
         lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -741,6 +746,17 @@ public class MainAutonomous extends LinearOpMode {
         stopMotor();
         resetAngle();
     }
+    public void timeRotate(String direction, double power, int time) {
+        runtime.reset();
+        runtime.startTime();
+        mode("no encoder");
+        if (direction == "cw") run(power, -power, power, -power);
+        if (direction == "ccw") run(-power, power, -power, power);
+        while (opModeIsActive() && runtime.milliseconds() < time) {}
+        stopMotor();
+        resetAngle();
+
+    }
     public void gyro() {
         mode("no encoder");
         double minOutput = round(minPower, 2);
@@ -753,6 +769,7 @@ public class MainAutonomous extends LinearOpMode {
             } else return;
         }
         stopMotor();
+        resetAngle();
     }
     public void armExtend() {
         armMotor.setPower(-1);
@@ -798,8 +815,8 @@ public class MainAutonomous extends LinearOpMode {
         pause("short motor");
     }
     public void hookOn() {
-        leftServo.setPosition(1);
-        rightServo.setPosition(0);
+        leftServo.setPosition(0.7);
+        rightServo.setPosition(0.3);
         pause("servo");
     }
     public void hookOff() {
@@ -814,10 +831,10 @@ public class MainAutonomous extends LinearOpMode {
         int duration = armDuration * height;
         int doubleDuration = duration * 2;
         armRaise(duration);
-        encoderDriveSmoothDist("front", travelY - 0.5*inPerBlock + movementError*inPerBlock);
+        encoderDriveSmoothDist("front", travelY - (1-detectionTransition)*inPerBlock + foundationMovementError*inPerBlock);
         armDrop(duration);
         gripRelease(gripDuration);
         armRaise(armDuration);
-        encoderDriveSmoothDist("back", travelY - 0.5*inPerBlock + movementError*inPerBlock);
+        encoderDriveSmoothDist("back", travelY - (1-detectionTransition)*inPerBlock + foundationMovementError*inPerBlock);
     }
 }

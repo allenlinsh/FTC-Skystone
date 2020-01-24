@@ -51,16 +51,17 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
             gripRelease(gripDuration/2);
             playSound("ss_power_up");
             encoderDriveSmoothDist("right", centerPlacement);
-            encoderDriveSmooth("back", 1.5 + movementError);
+            encoderDriveSmooth("back", 1.5 + foundationMovementError);
             hookOn();
-            encoderDriveSmooth("front", 0.75 + movementError, minPower);
+            encoderDriveSmooth("front", 1.25 + foundationMovementError);
             curve(-90, turnPower);
-            encoderDriveSmooth("back", 0.75, minPower);
+            encoderDriveSmooth("back", 0.5);
             hookOff();
             // Parking
-            encoderDriveSmoothDist("left", centerPlacement);
+            timeDrive("front", minPower, 100);
+            encoderDriveSmoothDist("left", centerPlacement + 0.5*inPerBlock);
             armExtend();
-            encoderDriveSmooth("front", 1.625 + 0.25);
+            encoderDriveSmooth("front", 1.625);
             encoderDriveSmooth("left", 0.25, minPower);
 
             stopAllMotors();

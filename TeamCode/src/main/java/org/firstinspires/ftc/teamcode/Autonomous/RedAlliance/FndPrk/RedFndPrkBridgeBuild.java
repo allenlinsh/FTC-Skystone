@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Autonomous.RedAlliance.FndPrk;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
@@ -24,6 +25,10 @@ public class RedFndPrkBridgeBuild extends MainAutonomous {
         print("Starting Position", starting);
         telemetry.update();
 
+        if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
+        if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
+        led.setPattern(pattern);
+
         waitForStart();
         print("Status", "Running");
         telemetry.update();
@@ -43,17 +48,24 @@ public class RedFndPrkBridgeBuild extends MainAutonomous {
             resetAngle();
             while (runtime.milliseconds() < delayTime) {}
             // Foundation
-            encoderDriveSmooth("front", 1);
-            encoderDriveSmoothDist("right", centerPlacement);
-            grabFoundation("red");
-            armExtend();
+            gripRelease(gripDuration/2);
+            playSound("ss_power_up");
+            encoderDriveSmoothDist("left", centerPlacement);
+            encoderDriveSmooth("back", 1.5 + foundationMovementError);
+            hookOn();
+            encoderDriveSmooth("front", 1.25 + foundationMovementError);
+            curve(90, turnPower);
+            encoderDriveSmooth("back", 0.5, minPower);
+            hookOff();
             // Parking
-            encoderDriveSmooth("left", 1.5, minPower);
-            encoderDriveSmooth("right", 1);
-            encoderDriveSmooth("front", 1.625, drivePower/2.0);
-            timeDrive("right", minPower, 500);
+            timeDrive("front", minPower, 100);
+            encoderDriveSmoothDist("right", centerPlacement + 0.5*inPerBlock);
+            armExtend();
+            encoderDriveSmooth("front", 1.625);
+            encoderDriveSmooth("right", 0.25, minPower);
+
+            stopAllMotors();
+            visionTargets.deactivate();
         }
-        stopAllMotors();
-        visionTargets.deactivate();
     }
 }

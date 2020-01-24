@@ -55,8 +55,9 @@ public class BluePrkBridgeBuild extends MainAutonomous {
             armExtend();
             encoderDriveSmooth("front", 1.625);
             encoderDriveSmooth("left", 0.25);
+
+            stopAllMotors();
+            visionTargets.deactivate();
         }
-        stopAllMotors();
-        visionTargets.deactivate();
     }
 }
