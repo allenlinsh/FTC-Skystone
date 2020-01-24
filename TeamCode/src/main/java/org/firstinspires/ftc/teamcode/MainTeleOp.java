@@ -136,10 +136,10 @@ public class MainTeleOp extends LinearOpMode {
                         ? 0
                         : Math.signum(gamepad1.right_stick_x) * Math.pow((gamepad1.right_stick_x * 1.0), 2);
             }
-            leftBackPower = round((-driveAxial - driveLateral + driveYaw), 2);
-            rightBackPower = round((-driveAxial + driveLateral - driveYaw), 2);
-            leftFrontPower = round((-driveAxial + driveLateral + driveYaw), 2);
-            rightFrontPower = round((-driveAxial - driveLateral - driveYaw), 2);
+            leftBackPower = round((-driveLateral - driveAxial + driveYaw), 2);
+            rightBackPower = round((driveLateral - driveAxial - driveYaw), 2);
+            leftFrontPower = round((driveLateral - driveAxial + driveYaw), 2);
+            rightFrontPower = round((-driveLateral - driveAxial - driveYaw), 2);
 
             // Arm stops if top or bottom limit is on
             armPower = ((gamepad2.left_stick_y > 0 && topPressed()) || (gamepad2.left_stick_y < 0 && bottomPressed()))
@@ -159,7 +159,7 @@ public class MainTeleOp extends LinearOpMode {
             if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0
                     || gamepad1.right_stick_x != 0 || gamepad1.dpad_up || gamepad1.dpad_down
                     || gamepad1.dpad_left || gamepad1.dpad_right || gamepad1.x || gamepad1.b) {
-                run(leftBackPower, rightBackPower, leftFrontPower, rightFrontPower);
+                run(leftBackPower-correction, rightBackPower+correction, leftFrontPower-correction, rightFrontPower+correction);
             } else {
                 stopMotor();
             }
