@@ -76,13 +76,13 @@ public class MainAutonomous extends LinearOpMode {
     public double drivePower = round((100.0/127.0), 2);
     public double turnPower = round((80.0/127.0), 2);
     public int currentDistance = 0;
-    public double minPower = 0.25;
-    public double sideMinPower = 1.25*0.25;
+    public double minPower = 0.3;
+    public double sideMinPower = 1.25*0.3;
     public double currentPower = minPower;
     public int armDuration = 125;
     public int gripDuration = 150;
     public double driftK = 1.2;
-    public double skystoneMovementError = 0;
+    public double skystoneMovementError = 0.2;
     public double foundationMovementError = 0;
     public double detectionTransition = 0.5;
     public PIDController pidRotate = new PIDController(0, 0, 0);
@@ -404,6 +404,8 @@ public class MainAutonomous extends LinearOpMode {
                         print("Servo","Initialized");
                         print("IMU","Initialized");
                         update();
+                        initReady = true;
+                        /*
                         // Initialize vuforia
                         if (!checkVuforia()) {
                             print("Motor","Initialized");
@@ -420,6 +422,7 @@ public class MainAutonomous extends LinearOpMode {
                             update();
                             initReady = true;
                         }
+                        */
                     }
                 }
             }
@@ -613,24 +616,15 @@ public class MainAutonomous extends LinearOpMode {
         while(opModeIsActive() && leftBackMotor.isBusy() && rightBackMotor.isBusy() && leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {
             currentDistance = getTick(direction);
             if (direction == "front" || direction == "back") {
-                if (ticks > 1000) {
-                    if (currentDistance < bufferTicks) {
-                        currentPower = power - (power-minOutput) * currentDistance / bufferTicks;
-                    } else if (currentDistance > bufferTicks && currentDistance < ticks) {
-                        currentPower = minOutput;
-                    }
-                }
-                else if (ticks < 1000){
+                if (currentDistance < bufferTicks) {
+                    currentPower = power - (power-minOutput) * currentDistance / bufferTicks;
+                } else if (currentDistance > bufferTicks && currentDistance < ticks) {
                     currentPower = minOutput;
                 }
             } else if (direction == "left" || direction == "right") {
-                if (sideTicks > 1.15*1000) {
-                    if (currentDistance < sideBufferTicks) {
-                        currentPower = power / 2.0 - (power / 2.0 - minPower) * currentDistance / sideBufferTicks;
-                    } else if (currentDistance > sideBufferTicks && currentDistance < sideTicks) {
-                        currentPower = sideMinOutput;
-                    }
-                } else if (sideTicks < 1.15*1000){
+                if (currentDistance < sideBufferTicks) {
+                    currentPower = power / 2.0 - (power / 2.0 - minPower) * currentDistance / sideBufferTicks;
+                } else if (currentDistance > sideBufferTicks && currentDistance < sideTicks) {
                     currentPower = sideMinOutput;
                 }
             }
@@ -815,8 +809,8 @@ public class MainAutonomous extends LinearOpMode {
         pause("short motor");
     }
     public void hookOn() {
-        leftServo.setPosition(0.7);
-        rightServo.setPosition(0.3);
+        leftServo.setPosition(1);
+        rightServo.setPosition(0);
         pause("servo");
     }
     public void hookOff() {

@@ -1,14 +1,13 @@
-package org.firstinspires.ftc.teamcode.Autonomous.BlueAlliance.FndSkyPrk;
+package org.firstinspires.ftc.teamcode.Autonomous.RedAlliance.SkyPrk;
 
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Autonomous.MainAutonomous;
 
-@Autonomous(name = "BlueFndSkyPrkBridgeDep", group = "FndSkyPrk")
-public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
-    public String className = getClass().getSimpleName();
-    public int numDelivered = 1;
+@Autonomous(name = "RedSkyPrkWallDep", group = "SkyPrk")
+public class RedSkyPrkWallDep extends MainAutonomous {
+    private String className = getClass().getSimpleName();
     @Override
     public void runOpMode() {
         // Initialize autonomous route
@@ -24,7 +23,7 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
         print("Skystone", doSkystone);
         print("Parking Position", parking);
         print("Starting Position", starting);
-        update();
+        telemetry.update();
 
         if ("blue".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.BLUE;
         if ("red".equals(teamColor)) pattern = RevBlinkinLedDriver.BlinkinPattern.RED;
@@ -32,12 +31,12 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
 
         waitForStart();
         print("Status", "Running");
-        update();
+        telemetry.update();
 
         /* Autonomous
          * Team Alliance:           Blue
          * Skystone:                Yes
-         * Foundation:              Yes
+         * Foundation:              No
          * Parking:                 Yes
          * Parking Position:        Bridge
          * Start Position:          Depot
@@ -51,7 +50,7 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
             // Recognize skystone
             gripRelease(gripDuration/2);
             playSound("ss_power_up");
-            encoderDriveSmoothDist("left", fullSkystoneDist+halfSkystoneDist/2.0);
+            encoderDriveSmoothDist("right", fullSkystoneDist+halfSkystoneDist/2.0);
             playSound("ss_roger_roger");
             // 1st skystone
 
@@ -62,36 +61,53 @@ public class BlueFndSkyPrkBridgeDep extends MainAutonomous {
             encoderDriveSmooth("front", 1.25, minPower);
             armDrop(armDuration);
             gripHold(gripDuration);
-            armRaise(armDuration*4);
+            armRaise(armDuration);
             encoderDriveSmooth("back", 0.25);
 
             // depot to building site
-            rotate(-90, turnPower);
-            encoderDriveSmooth("front", 2.5);
             rotate(90, turnPower);
-
+            encoderDriveSmooth("front", 1.5);
             dropSkystone();
-            armCollapse();
 
+            // 2nd skystone
+            // building site to depot
+            encoderDriveSmooth("back", 2);
+            rotate(-90, turnPower);
+
+            // grab skystone
+            encoderDriveSmooth("front", 0.25, minPower);
+            armDrop(armDuration);
+            gripHold(gripDuration);
+            armRaise(armDuration);
+            encoderDriveSmooth("back", 0.25);
+
+            // depot to building site
             rotate(90, turnPower);
+            encoderDriveSmoothDist("front", 1.5*inPerBlock + fullSkystoneDist);
+            dropSkystone();
+            /*
+            encoderDriveSmoothDist("back", 2*inPerBlock + fullSkystoneDist);
+
+            //3rd skystone
+            rotate(-90, turnPower);
+            encoderDriveSmooth("right", 0.5);
+            encoderDriveSmoothDist("left", fullSkystoneDist);
+
+            // grab skystone
+            encoderDriveSmooth("front", 0.25, minPower);
+            armDrop(armDuration);
+            gripHold(gripDuration);
+            armRaise(armDuration);
+            encoderDriveSmoothDist("back", 0.25);
+
+            // depot to building site
             rotate(90, turnPower);
-
-            encoderDriveSmooth("right", 0.25);
-            hookOn();
-
-            encoderDriveSmooth("front", 1.25 + foundationMovementError);
-            curve(-90, turnPower);
-            encoderDriveSmooth("back", 0.5);
-            hookOff();
-            // Parking
-            timeDrive("front", minPower, 100);
-            encoderDriveSmoothDist("left", centerPlacement + 0.25*inPerBlock);
-            armExtend();
-            encoderDriveSmooth("front", 1.625);
-            encoderDriveSmooth("left", 0.25, minPower);
-
-            stopAllMotors();
-
+            encoderDriveSmoothDist("front", 1.5*inPerBlock + 2*fullSkystoneDist);
+            dropSkystone();
+            */
+            encoderDriveSmooth("back", 0.625);
+            encoderDriveSmooth("right", 1.5);
         }
+        stopAllMotors();
     }
 }

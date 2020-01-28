@@ -50,64 +50,67 @@ public class BlueSkyPrkBridgeDep extends MainAutonomous {
             // Recognize skystone
             gripRelease(gripDuration/2);
             playSound("ss_power_up");
-            encoderDriveSmooth("front", detectionTransition);
-            recognizeTarget("Stone Target");
+            encoderDriveSmoothDist("left", fullSkystoneDist+halfSkystoneDist/2.0);
             playSound("ss_roger_roger");
             // 1st skystone
-            encoderDriveSmoothDist("right", travelX);
 
             // grab skystone
             armExtend();
             armRaise(armDuration);
             gripRelease(gripDuration);
-            encoderDriveSmoothDist("front", travelY, minPower);
+            encoderDriveSmooth("front", 1.25, minPower);
             armDrop(armDuration);
             gripHold(gripDuration);
             armRaise(armDuration);
-            encoderDriveSmoothDist("back", travelY - (1-detectionTransition)*inPerBlock + skystoneMovementError*inPerBlock, minPower);
+            encoderDriveSmooth("back", 0.25);
 
             // depot to building site
             rotate(-90, turnPower);
-            encoderDriveSmoothDist("front", 2*inPerBlock + travelX);
+            encoderDriveSmooth("front", 1.5);
             dropSkystone();
+
 
             // 2nd skystone
             // building site to depot
-            encoderDriveSmoothDist("back", 2*inPerBlock + travelX + leftTranslation);
+            encoderDriveSmooth("back", 2);
             rotate(90, turnPower);
-            encoderDriveSmooth("right", 1);
+            encoderDriveSmooth("left", 0.5);
+            encoderDriveSmoothDist("left", fullSkystoneDist);
 
             // grab skystone
-            encoderDriveSmoothDist("front", travelY - (1-detectionTransition)*inPerBlock + skystoneMovementError*inPerBlock, minPower);
-            if (skystonePosition == "right") {
-                rotate(15, turnPower);
-            }
+            encoderDriveSmooth("front", 0.25, minPower);
             armDrop(armDuration);
             gripHold(gripDuration);
             armRaise(armDuration);
-            if (skystonePosition == "right") {
-                rotate(-15, turnPower);
-            }
-            encoderDriveSmoothDist("back", travelY - (1-detectionTransition)*inPerBlock + skystoneMovementError*inPerBlock, minPower);
+            encoderDriveSmooth("back", 0.25);
 
             // depot to building site
-            if (skystonePosition == "right") {
-                rotate(-15, turnPower);
-                rotate(-15, turnPower);
-                rotate(-15, turnPower);
-                rotate(-15, turnPower);
-                rotate(-15, turnPower);
-                rotate(-15, turnPower);
-            } else {
-                rotate(-90, turnPower);
-            }
-            encoderDriveSmoothDist("front", 3*inPerBlock + travelX);
+            rotate(90, turnPower);
+            encoderDriveSmoothDist("front", 1.5*inPerBlock + fullSkystoneDist);
             dropSkystone();
-            encoderDriveSmooth("back", 0.625);
-            encoderDriveSmooth("right", 0.25);
+            /*
+            encoderDriveSmoothDist("back", 2*inPerBlock + fullSkystoneDist);
 
-            stopAllMotors();
-            visionTargets.deactivate();
+            //3rd skystone
+            rotate(-90, turnPower);
+            encoderDriveSmooth("right", 0.5);
+            encoderDriveSmoothDist("left", fullSkystoneDist);
+
+            // grab skystone
+            encoderDriveSmooth("front", 0.25, minPower);
+            armDrop(armDuration);
+            gripHold(gripDuration);
+            armRaise(armDuration);
+            encoderDriveSmoothDist("back", 0.25);
+
+            // depot to building site
+            rotate(90, turnPower);
+            encoderDriveSmoothDist("front", 1.5*inPerBlock + 2*fullSkystoneDist);
+            dropSkystone();
+            */
+            encoderDriveSmooth("back", 0.625);
+            encoderDriveSmooth("left", 0.25);
         }
+        stopAllMotors();
     }
 }

@@ -55,9 +55,6 @@ public class BluePrkWallDep extends MainAutonomous {
             armExtend();
             encoderDriveSmooth("back", 1.625);
             encoderDriveSmooth("right", 0.25);
-
-            stopAllMotors();
-            visionTargets.deactivate();
         }
     }
 }

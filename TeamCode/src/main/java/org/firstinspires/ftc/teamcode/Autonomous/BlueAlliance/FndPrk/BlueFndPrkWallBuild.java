@@ -65,7 +65,6 @@ public class BlueFndPrkWallBuild extends MainAutonomous {
             encoderDriveSmooth("right", 0.25);
 
             stopAllMotors();
-            visionTargets.deactivate();
         }
     }
 }

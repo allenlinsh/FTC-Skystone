@@ -65,7 +65,6 @@ public class BlueFndPrkBridgeBuild extends MainAutonomous {
             encoderDriveSmooth("left", 0.25, minPower);
 
             stopAllMotors();
-            visionTargets.deactivate();
         }
     }
 }

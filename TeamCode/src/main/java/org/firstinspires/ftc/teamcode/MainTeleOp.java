@@ -4,7 +4,6 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.view.Display;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -23,7 +22,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 @TeleOp
 public class MainTeleOp extends LinearOpMode {
     // Declare hardware variables
-    public BNO055IMU imu;
     public DcMotor leftBackMotor, rightBackMotor, leftFrontMotor, rightFrontMotor;
     public DcMotor armMotor, gripMotor;
     public Servo leftServo, rightServo;
@@ -42,9 +40,6 @@ public class MainTeleOp extends LinearOpMode {
 
     // Declare movement variables
     private static final int ticksPerRev = 480;
-    private Orientation lastAngles = new Orientation();
-    private double globalAngle;
-    private double correction;
     private double maxPower = round((100.0/127.0), 2);
     private double drivePower = round((40.0/127.0), 2);
     private double minPower = 0.25;
@@ -159,7 +154,7 @@ public class MainTeleOp extends LinearOpMode {
             if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0
                     || gamepad1.right_stick_x != 0 || gamepad1.dpad_up || gamepad1.dpad_down
                     || gamepad1.dpad_left || gamepad1.dpad_right || gamepad1.x || gamepad1.b) {
-                run(leftBackPower-correction, rightBackPower+correction, leftFrontPower-correction, rightFrontPower+correction);
+                run(leftBackPower, rightBackPower, leftFrontPower, rightFrontPower);
             } else {
                 stopMotor();
             }
@@ -239,7 +234,6 @@ public class MainTeleOp extends LinearOpMode {
         teamColor = String.valueOf(preferences.getString("auto_team_color", "blue"));
     }
     public void getHardwareMap() {
-        imu                 = hardwareMap.get(BNO055IMU.class, "imu");
         leftBackMotor       = hardwareMap.get(DcMotor.class, "leftBackMotor");
         rightBackMotor      = hardwareMap.get(DcMotor.class, "rightBackMotor");
         leftFrontMotor      = hardwareMap.get(DcMotor.class, "leftFrontMotor");
@@ -286,21 +280,6 @@ public class MainTeleOp extends LinearOpMode {
             return false;
         }
     }
-    private void initIMU() {
-        BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
-        imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        imuParameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        imuParameters.loggingEnabled = false;
-        imu.initialize(imuParameters);
-        while(!imu.isGyroCalibrated()){}
-    }
-    private boolean checkIMU() {
-        if (imu.isGyroCalibrated()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
     public void initCheck() {
         while (!isStopRequested() && !initReady) {
             // Initialize motor
@@ -321,20 +300,7 @@ public class MainTeleOp extends LinearOpMode {
                     print("Motor","Initialized");
                     print("Servo","Initialized");
                     update();
-                    // Initialize imu
-                    if (!checkIMU()) {
-                        print("Motor","Initialized");
-                        print("Servo","Initialized");
-                        print("IMU","Initializing...");
-                        update();
-                        initIMU();
-                    } else if (checkIMU()) {
-                        print("Motor","Initialized");
-                        print("Servo","Initialized");
-                        print("IMU","Initialized");
-                        update();
-                        initReady = true;
-                    }
+                    initReady = true;
                 }
             }
         }

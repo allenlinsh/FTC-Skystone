@@ -58,14 +58,11 @@ public class RedFndPrkWallBuild extends MainAutonomous {
             encoderDriveSmooth("back", 0.5, minPower);
             hookOff();
             // Parking
-            timeDrive("front", minPower, 100);
-            encoderDriveSmoothDist("left", 0.5*inPerBlock-centerPlacement);
             armExtend();
             encoderDriveSmooth("front", 1.625);
             encoderDriveSmooth("left", 0.25, minPower);
 
             stopAllMotors();
-            visionTargets.deactivate();
         }
     }
 }
