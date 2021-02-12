@@ -28,3 +28,4 @@ Aimie Marvel
 
 ## Capstone Design
 <img src="img/capstone-ilt.jpg" width="500">
+<img src="img/capstone-ilt-v2.jpg" width="500">
