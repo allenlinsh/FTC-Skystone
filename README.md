@@ -1,6 +1,6 @@
 # :robot:FIRST Tech Challenge Skystone (Inter League Tournament)
 
-FIRST Tech Challenge Team #15429 Extremophiles Code for the Skystone Challenge (2019-2020) [Archived on Jan 27, 2020]
+FIRST Tech Challenge Team #15429 Extremophiles Code (2019-2020) [Archived on Jan 27, 2020]
 
 - Los Angeles Inter League Tournament Semi-finalist Alliance Captain
 - Ranking: 6th Place
